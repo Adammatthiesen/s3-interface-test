@@ -8,3 +8,7 @@ Notable files:
 - `.env.demo`
 - `/src/pages/index.astro`
 - `/src/pages/api/s3.ts`
+
+## License
+
+[MIT Licensed](./LICENSE)
