@@ -15,12 +15,31 @@ const s3Client = new S3Client({
 });
 
 const BUCKET_NAME = import.meta.env.S3_BUCKET_NAME;
+const PUBLIC_ENDPOINT = import.meta.env.S3_PUBLIC_ENDPOINT;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const { action, key, contentType, prefix } = await request.json();
 
     switch (action) {
+      case 'publicUrl': {
+        // If public endpoint is configured, return permanent public URL
+        if (PUBLIC_ENDPOINT) {
+          const publicUrl = PUBLIC_ENDPOINT.endsWith('/') 
+            ? `${PUBLIC_ENDPOINT}${key}` 
+            : `${PUBLIC_ENDPOINT}/${key}`;
+          return new Response(JSON.stringify({ url: publicUrl, isPermanent: true }), { status: 200 });
+        }
+        
+        // Fallback to presigned URL (7 days max)
+        const command = new GetObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: key,
+        });
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 604800 }); // 7 days
+        return new Response(JSON.stringify({ url, isPermanent: false }), { status: 200 });
+      }
+
       case 'upload': {
         // Generate presigned URL for upload
         const command = new PutObjectCommand({
