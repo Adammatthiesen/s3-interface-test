@@ -1,8 +1,6 @@
-import type { ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn } from "../definitions";
+import type { ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn, UrlMappingServiceDefinition, UrlMetadata } from "../definitions";
 import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import type { UrlMetadata } from "../../url-mapping/types";
-import { urlMappingService } from "../../url-mapping/service";
 
 // Flexible configuration for any S3-compatible provider
 const s3Client = new S3Client({
@@ -42,11 +40,20 @@ async function generateUrlMetadata(key: string): Promise<UrlMetadata> {
     return { url, isPermanent: false, expiresAt: inSevenDays.getTime() };
 }
 
-export class S3ApiService<C extends unknown, R extends unknown> implements StorageApiBuilderDefinition<C, R> {
+export class S3ApiService<C extends unknown, R extends unknown> implements StorageApiBuilderDefinition<C, R, UrlMetadata> {
     driver;
+    urlMappingService
 
-    constructor(driver: ContextDriverDefinition<C, R>) {
+    constructor(driver: ContextDriverDefinition<C, R>, urlMappingService: UrlMappingServiceDefinition<UrlMetadata>) {
         this.driver = driver;
+        this.urlMappingService = urlMappingService;
+    }
+
+    resolveUrl(identifier: string): Promise<UrlMetadata> {
+        return this.urlMappingService.resolve(
+            identifier,
+            generateUrlMetadata,
+        );
     }
 
     getPOST(): StorageAPIEndpointFn<C, R> {
@@ -55,7 +62,7 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
 
             switch (action) {
                 case 'resolveUrl': {
-                    const metadata = await urlMappingService.resolve(
+                    const metadata = await this.urlMappingService.resolve(
                         identifier,
                         generateUrlMetadata,
                     );
@@ -66,8 +73,8 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
                     const metadata = await generateUrlMetadata(key);
 
                     // Optionally register the mapping
-                    const mappingIdentifier = urlMappingService.createIdentifier(key);
-                    await urlMappingService.register(mappingIdentifier, key, metadata);
+                    const mappingIdentifier = this.urlMappingService.createIdentifier(key);
+                    await this.urlMappingService.register(mappingIdentifier, metadata);
 
                     return {
                         data: {
@@ -110,8 +117,8 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
                     await s3Client.send(command);
 
                     // Also delete from URL mapping
-                    const mappingIdentifier = urlMappingService.createIdentifier(key);
-                    await urlMappingService.delete(mappingIdentifier);
+                    const mappingIdentifier = this.urlMappingService.createIdentifier(key);
+                    await this.urlMappingService.delete(mappingIdentifier);
 
                     return { data: { success: true }, status: 200 };
                 }
@@ -128,13 +135,13 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
 
                 case 'cleanup': {
                     // Clean up expired mappings
-                    const deletedCount = await urlMappingService.cleanup();
+                    const deletedCount = await this.urlMappingService.cleanup();
                     return { data: { deletedCount }, status: 200 };
                 }
 
                 case 'mappings': {
                     // Get all mappings (for debugging)
-                    const mappings = await urlMappingService.getAll();
+                    const mappings = await this.urlMappingService.getAll();
                     return { data: { mappings }, status: 200 };
                 }
 

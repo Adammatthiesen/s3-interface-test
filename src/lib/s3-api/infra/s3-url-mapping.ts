@@ -1,8 +1,13 @@
 // URL Mapping Service - handles resolution and auto-refresh of URLs
-import type { UrlMetadata, UrlMapping } from './types';
-import { db } from './database';
+import type { UrlMetadata, UrlMapping, UrlMappingServiceDefinition, UrlMappingDatabaseDefinition } from '../definitions';
 
-export class UrlMappingService {
+export class S3UrlMappingService implements UrlMappingServiceDefinition<UrlMetadata> {
+  database;
+
+  constructor(database: UrlMappingDatabaseDefinition) {
+    this.database = database;
+  }
+
   /**
    * Resolve a URL from an identifier (e.g., "s3-file://path/to/file.jpg")
    * Automatically refreshes expired URLs
@@ -11,7 +16,7 @@ export class UrlMappingService {
     identifier: string,
     refreshCallback: (s3Key: string) => Promise<UrlMetadata>
   ): Promise<UrlMetadata> {
-    const mapping = await db.get(identifier);
+    const mapping = await this.database.get(identifier);
     const now = Date.now();
 
     // Case 1: Permanent URL - return immediately
@@ -27,7 +32,7 @@ export class UrlMappingService {
       const s3Key = this.extractKeyFromIdentifier(identifier);
       const metadata = await refreshCallback(s3Key);
 
-      await this.register(identifier, s3Key, metadata);
+      await this.register(identifier, metadata);
 
       return metadata;
     }
@@ -45,13 +50,11 @@ export class UrlMappingService {
    */
   async register(
     identifier: string,
-    s3Key: string,
     metadata: UrlMetadata
   ): Promise<void> {
     const now = Date.now();
     const mapping: UrlMapping = {
       identifier,
-      s3Key,
       url: metadata.url,
       isPermanent: metadata.isPermanent,
       expiresAt: metadata.expiresAt,
@@ -59,28 +62,28 @@ export class UrlMappingService {
       updatedAt: now,
     };
 
-    await db.set(mapping);
+    await this.database.set(mapping);
   }
 
   /**
    * Delete a URL mapping
    */
   async delete(identifier: string): Promise<void> {
-    await db.delete(identifier);
+    await this.database.delete(identifier);
   }
 
   /**
    * Clean up expired entries (optional maintenance)
    */
   async cleanup(): Promise<number> {
-    return await db.cleanup();
+    return await this.database.cleanup();
   }
 
   /**
    * Get all mappings (for debugging/admin)
    */
   async getAll(): Promise<UrlMapping[]> {
-    return await db.getAll();
+    return await this.database.getAll();
   }
 
   /**
@@ -103,6 +106,3 @@ export class UrlMappingService {
     return `s3-file://${s3Key}`;
   }
 }
-
-// Singleton instance
-export const urlMappingService = new UrlMappingService();

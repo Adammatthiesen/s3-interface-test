@@ -4,6 +4,18 @@ export type ParsedContext = {
     getHeader: (name: string) => string | null;
 };
 
+export interface UrlMetadata {
+    url: string;
+    isPermanent: boolean;
+    expiresAt?: number; // Unix timestamp in ms
+}
+
+export interface UrlMapping extends UrlMetadata {
+    identifier: string;
+    createdAt: number;
+    updatedAt: number;
+}
+
 export type ContextHandler = (context: ParsedContext) => Promise<{ data: unknown, status: number }>;
 
 export type ContextHandlerFn<C extends unknown, R extends unknown> = (context: C) => Promise<R>;
@@ -21,8 +33,34 @@ export interface ContextDriverDefinition<C extends unknown, R extends unknown> {
 
 export type StorageAPIEndpointFn<C extends unknown, R extends unknown> = (context: C) => Promise<R>;
 
-export interface StorageApiBuilderDefinition<C extends unknown, R extends unknown> {
+export interface StorageApiBuilderDefinition<C extends unknown, R extends unknown, U extends unknown> {
     driver: ContextDriverDefinition<C, R>;
+    urlMappingService: UrlMappingServiceDefinition<U>;
+    resolveUrl: (identifier: string) => Promise<U>;
     getPOST(): StorageAPIEndpointFn<C, R>;
     getPUT(): StorageAPIEndpointFn<C, R>;
+}
+
+export interface UrlMappingDatabaseDefinition {
+    get(identifier: string): Promise<UrlMapping | null>;
+    set(mapping: UrlMapping): Promise<void>;
+    delete(identifier: string): Promise<void>;
+    cleanup(): Promise<number>; // Returns count of deleted entries
+    getAll(): Promise<UrlMapping[]>;
+}
+
+export interface UrlMappingServiceDefinition<U extends unknown> {
+    database: UrlMappingDatabaseDefinition;
+    resolve(
+        identifier: string,
+        refreshCallback: (key: string) => Promise<U>
+    ): Promise<U>;
+    register(
+        identifier: string,
+        metadata: U,
+    ): Promise<void>;
+    delete(identifier: string): Promise<void>;
+    cleanup(): Promise<number>;
+    getAll(): Promise<U[]>;
+    createIdentifier(key: string): string;
 }

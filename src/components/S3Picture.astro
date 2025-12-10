@@ -1,4 +1,6 @@
 ---
+import { s3ApiService } from '../lib/s3-api';
+
 /**
  * S3Picture Component
  * 
@@ -64,20 +66,7 @@ if (!identifier && !s3Key) {
 // Helper function to resolve URL
 async function resolveUrl(fileIdentifier: string) {
   try {
-    const response = await fetch(`${Astro.url.origin}/api/s3`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        action: 'resolveUrl', 
-        identifier: fileIdentifier 
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to resolve URL: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    const data = await s3ApiService.resolveUrl(fileIdentifier);
     return data.url;
   } catch (err) {
     console.error('S3Picture: Failed to resolve URL', { identifier: fileIdentifier, error: err });

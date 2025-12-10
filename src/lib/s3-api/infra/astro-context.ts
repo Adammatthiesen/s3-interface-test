@@ -1,8 +1,8 @@
 import type { APIContext } from "astro";
-import type { ContextDriverDefinition, ContextHandler, ContextHandlerFn } from "../definitions";
+import type { ContextDriverDefinition, ContextHandler, ContextHandlerFn, ParsedContext } from "../definitions";
 
 export class AstroContextDriver implements ContextDriverDefinition<APIContext, Response> {
-    parseContext({ request }: APIContext) {
+    parseContext({ request }: APIContext): ParsedContext {
         return {
             getJson: () => request.json(),
             getArrayBuffer: () => request.arrayBuffer(),

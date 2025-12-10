@@ -1,7 +1,7 @@
 // In-memory database implementation (swap with SQLite/PostgreSQL for production)
-import type { UrlMapping, UrlMappingDatabase } from './types';
+import type { UrlMapping, UrlMappingDatabaseDefinition } from '../definitions';
 
-class InMemoryDatabase implements UrlMappingDatabase {
+export class InMemoryDatabase implements UrlMappingDatabaseDefinition {
   private store: Map<string, UrlMapping> = new Map();
 
   async get(identifier: string): Promise<UrlMapping | null> {
@@ -44,6 +44,3 @@ class InMemoryDatabase implements UrlMappingDatabase {
     this.store.clear();
   }
 }
-
-// Singleton instance
-export const db = new InMemoryDatabase();
