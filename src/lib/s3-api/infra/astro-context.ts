@@ -1,5 +1,5 @@
 import type { APIContext } from "astro";
-import type { ContextDriverDefinition, ParsedContext } from "../definitions";
+import type { ContextDriverDefinition, ContextHandler, ContextHandlerFn } from "../definitions";
 
 export class AstroContextDriver implements ContextDriverDefinition<APIContext, Response> {
     parseContext({ request }: APIContext) {
@@ -17,7 +17,7 @@ export class AstroContextDriver implements ContextDriverDefinition<APIContext, R
         });
     }
 
-    buildPostEndpoint<D>(contextHandler: (context: ParsedContext) => Promise<{ data: D, status: number }>) {
+    buildPostEndpoint(contextHandler: ContextHandler): ContextHandlerFn<APIContext, Response> {
         return async (context: APIContext): Promise<Response> => {
             try {
                 const parsedContext = this.parseContext(context);
@@ -29,7 +29,7 @@ export class AstroContextDriver implements ContextDriverDefinition<APIContext, R
         };
     }
 
-    buildPutEndpoint<D>(contextHandler: (context: ParsedContext) => Promise<{ data: D, status: number }>) {
+    buildPutEndpoint(contextHandler: ContextHandler): ContextHandlerFn<APIContext, Response> {
         return async (context: APIContext): Promise<Response> => {
             try {
                 const parsedContext = this.parseContext(context);

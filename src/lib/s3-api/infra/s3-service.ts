@@ -1,4 +1,4 @@
-import type { ContextDriverDefinition, StorageApiBuilderDefinition } from "../definitions";
+import type { ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn } from "../definitions";
 import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { UrlMetadata } from "../../url-mapping/types";
@@ -49,7 +49,7 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
         this.driver = driver;
     }
 
-    getPOST(): (context: C) => Promise<R> {
+    getPOST(): StorageAPIEndpointFn<C, R> {
         return this.driver.buildPostEndpoint(async ({ getJson }) => {
             const { action, key, contentType, prefix, identifier } = await getJson();
 
@@ -171,7 +171,7 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
         })
     }
 
-    getPUT(): (context: C) => Promise<R> {
+    getPUT(): StorageAPIEndpointFn<C, R> {
         return this.driver.buildPutEndpoint(async ({ getArrayBuffer, getHeader }) => {
             try {
                 const contentType = getHeader('Content-Type') || 'application/octet-stream';
