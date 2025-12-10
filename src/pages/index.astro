@@ -124,21 +124,19 @@ import '../styles.css';
         for (const file of filesToUpload) {
           const key = `${currentPath}${Date.now()}-${file.name}`;
           
-          const { url } = await fetch('/api/s3', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'upload',
-              key,
-              contentType: file.type,
-            }),
-          }).then(r => r.json());
-
-          await fetch(url, {
+          // Upload directly to our API endpoint (server-side S3 upload)
+          const response = await fetch('/api/s3', {
             method: 'PUT',
+            headers: { 
+              'Content-Type': file.type,
+              'x-s3-key': key
+            },
             body: file,
-            headers: { 'Content-Type': file.type },
           });
+
+          if (!response.ok) {
+            throw new Error('Upload failed');
+          }
         }
 
         showStatus('Upload successful!', 'success');
@@ -251,7 +249,7 @@ import '../styles.css';
 
     async function viewPublicUrl(key) {
       try {
-        const { url, isPermanent } = await fetch('/api/s3', {
+        const { url, isPermanent, identifier } = await fetch('/api/s3', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'publicUrl', key }),
@@ -262,11 +260,15 @@ import '../styles.css';
         // Update modal message based on whether URL is permanent
         const modalBody = document.querySelector('.modal-body p');
         if (isPermanent) {
-          modalBody.textContent = 'This is a permanent public URL:';
-          modalBody.style.color = '#28a745';
+          modalBody.innerHTML = `
+            This is a <strong style="color: #28a745;">permanent public URL</strong>:<br>
+            <small style="color: #6c757d; font-family: monospace; margin-top: 0.25rem; display: block;">Identifier: ${identifier}</small>
+          `;
         } else {
-          modalBody.textContent = 'This URL will be valid for 7 days:';
-          modalBody.style.color = '#6c757d';
+          modalBody.innerHTML = `
+            This URL will be valid for <strong>7 days</strong>:<br>
+            <small style="color: #6c757d; font-family: monospace; margin-top: 0.25rem; display: block;">Identifier: ${identifier}</small>
+          `;
         }
         
         document.getElementById('urlModal').style.display = 'flex';
@@ -329,21 +331,19 @@ import '../styles.css';
         // Create a placeholder file to represent the folder
         const key = `${currentPath}${sanitized}/.folder`;
         
-        const { url } = await fetch('/api/s3', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'upload',
-            key,
-            contentType: 'text/plain',
-          }),
-        }).then(r => r.json());
-
-        await fetch(url, {
+        // Upload empty file to create folder
+        const response = await fetch('/api/s3', {
           method: 'PUT',
+          headers: { 
+            'Content-Type': 'text/plain',
+            'x-s3-key': key
+          },
           body: '',
-          headers: { 'Content-Type': 'text/plain' },
         });
+
+        if (!response.ok) {
+          throw new Error('Failed to create folder');
+        }
 
         showStatus('Folder created successfully', 'success');
         loadFiles();

@@ -1,0 +1,241 @@
+---
+import S3Image from '../components/S3Image.astro';
+import S3Picture from '../components/S3Picture.astro';
+import '../styles.css';
+
+// Example usage - you would replace these with your actual S3 keys
+const exampleImages = [
+  'uploads/1765388433468-example1.jpg',
+  'uploads/1765388443236-example2.png',
+  'uploads/1765388443099-example3.webp',
+];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S3 Image Components Demo</title>
+  <style>
+    .demo-section {
+      margin: 2rem 0;
+      padding: 2rem;
+      background: white;
+      border-radius: 12px;
+    }
+    
+    .demo-section h2 {
+      margin-bottom: 1rem;
+      color: #333;
+    }
+    
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .code-example {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      font-family: monospace;
+      font-size: 0.875rem;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>S3 Image Components Demo</h1>
+      <p class="subtitle">Examples of using S3Image and S3Picture components</p>
+    </div>
+
+    <div class="content">
+      <!-- Basic S3Image Example -->
+      <div class="demo-section">
+        <h2>1. Basic S3Image with Identifier</h2>
+        <div class="code-example">
+          &lt;S3Image identifier="s3-file://uploads/1765388433468-example1.jpg" alt="Example" /&gt;
+        </div>
+        <S3Image 
+          identifier="s3-file://uploads/1765388433468-example1.jpg" 
+          alt="Example image from S3" 
+          width={300}
+          height={200}
+        />
+      </div>
+
+      <!-- S3Image with S3 Key -->
+      <div class="demo-section">
+        <h2>2. S3Image with Direct S3 Key</h2>
+        <div class="code-example">
+          &lt;S3Image s3Key="uploads/1765388443236-example2.png" alt="Direct key example" /&gt;
+        </div>
+        <S3Image 
+          s3Key="uploads/1765388443236-example2.png" 
+          alt="Example using direct S3 key" 
+          width={300}
+          height={200}
+        />
+      </div>
+
+      <!-- S3Image with Custom Styling -->
+      <div class="demo-section">
+        <h2>3. S3Image with Custom Styling</h2>
+        <div class="code-example">
+          &lt;S3Image 
+            s3Key="uploads/1765388443099-example3.webp" 
+            alt="Styled example"
+            class="rounded-image"
+            fit="contain"
+            width={400}
+          /&gt;
+        </div>
+        <S3Image 
+          s3Key="uploads/1765388443099-example3.webp" 
+          alt="Custom styled image" 
+          class="rounded-image"
+          fit="contain"
+          width={400}
+        />
+      </div>
+
+      <!-- Image Grid -->
+      <div class="demo-section">
+        <h2>4. Image Grid Example</h2>
+        <div class="code-example">
+          {`<div class="image-grid">
+  {images.map(key => (
+    <S3Image s3Key={key} alt="Grid image" loading="lazy" />
+  ))}
+</div>`}
+        </div>
+        <div class="image-grid">
+          {exampleImages.map((key) => (
+            <S3Image 
+              s3Key={key} 
+              alt="Grid image" 
+              loading="lazy"
+              fit="cover"
+              width="100%"
+              height={200}
+            />
+          ))}
+        </div>
+      </div>
+
+      <!-- S3Picture Example -->
+      <div class="demo-section">
+        <h2>5. Responsive S3Picture (Advanced)</h2>
+        <div class="code-example">
+          {`<S3Picture 
+  identifier="s3-file://uploads/hero.jpg"
+  sources={[
+    { s3Key: 'uploads/hero-mobile.jpg', media: '(max-width: 768px)' },
+    { s3Key: 'uploads/hero-tablet.jpg', media: '(max-width: 1024px)' }
+  ]}
+  alt="Responsive hero image"
+/>`}
+        </div>
+        <S3Picture 
+          identifier="s3-file://uploads/1765388433468-example1.jpg"
+          alt="Responsive example" 
+          width="100%"
+          height={400}
+        />
+      </div>
+
+      <!-- Component Features -->
+      <div class="demo-section">
+        <h2>Component Features</h2>
+        <ul style="line-height: 1.8;">
+          <li>✅ Automatic URL resolution using the mapping system</li>
+          <li>✅ Support for both <code>s3-file://</code> identifiers and direct S3 keys</li>
+          <li>✅ Automatic URL refresh when expired</li>
+          <li>✅ Built-in error handling with fallback UI</li>
+          <li>✅ Lazy loading support</li>
+          <li>✅ Responsive images with S3Picture</li>
+          <li>✅ Custom styling and sizing options</li>
+          <li>✅ Data attributes for debugging (data-s3-identifier, data-permanent)</li>
+        </ul>
+      </div>
+
+      <div class="demo-section">
+        <h2>Props Reference</h2>
+        <h3 style="margin-top: 1rem;">S3Image</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+          <thead>
+            <tr style="background: #f8f9fa; text-align: left;">
+              <th style="padding: 0.5rem; border: 1px solid #dee2e6;">Prop</th>
+              <th style="padding: 0.5rem; border: 1px solid #dee2e6;">Type</th>
+              <th style="padding: 0.5rem; border: 1px solid #dee2e6;">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>identifier</code></td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">string</td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">S3 file identifier (e.g., "s3-file://path/to/image.jpg")</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>s3Key</code></td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">string</td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">Direct S3 key (alternative to identifier)</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>alt</code></td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">string</td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">Alt text (required)</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>class</code></td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">string</td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">CSS class name</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>width</code></td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">number | string</td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">Image width</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>height</code></td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">number | string</td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">Image height</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>loading</code></td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">'lazy' | 'eager'</td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">Loading strategy (default: 'lazy')</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>fit</code></td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">'cover' | 'contain' | ...</td>
+              <td style="padding: 0.5rem; border: 1px solid #dee2e6;">Object-fit value (default: 'cover')</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+<style>
+  .rounded-image {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  code {
+    background: #e9ecef;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.875em;
+  }
+</style>
