@@ -1,0 +1,995 @@
+// S3 File Browser Web Component
+
+interface S3File {
+    key: string;
+    size: number;
+    lastModified?: Date;
+}
+
+interface MimeTypeMap {
+    [key: string]: string;
+}
+
+type S3ReturnType = 'url' | 'identifier' | 'key';
+
+/**
+ * S3FileBrowser Custom Element
+ * A web component for browsing and selecting files from S3 storage
+ */
+class S3FileBrowser extends HTMLElement {
+    private currentPath: string = '';
+    private selectedFile: S3File | null = null;
+    private triggerId!: string;
+    private targetInputId!: string;
+    private modalTitle!: string;
+    private fileTypes!: string[];
+    private filesOnly!: boolean;
+    private returnType!: S3ReturnType;
+    private modalId!: string;
+    private contentId!: string;
+    private isUploading: boolean = false;
+    private apiEndpoint: string = '/api/s3';
+    private pendingFiles: File[] = [];
+    private fileToDelete: S3File | null = null;
+
+    constructor() {
+        super();
+    }
+
+    connectedCallback(): void {
+        // Get attributes
+        this.triggerId = this.getAttribute('trigger-id') || '';
+        this.targetInputId = this.getAttribute('target-input-id') || '';
+        this.modalTitle = this.getAttribute('data-title') || 'Select File'; const fileTypesAttr = this.getAttribute('file-types');
+        this.fileTypes = fileTypesAttr ? JSON.parse(fileTypesAttr) : [];
+
+        this.filesOnly = this.getAttribute('files-only') === 'true';
+        this.returnType = (this.getAttribute('return-type') as S3ReturnType) || 'url';
+        this.apiEndpoint = this.getAttribute('api-endpoint') || '/api/s3';
+
+        // Generate unique IDs
+        this.modalId = `s3-browser-${this.triggerId}`;
+        this.contentId = `s3-browser-content-${this.triggerId}`;
+
+        // Render the component
+        this.render();
+        this.attachEventListeners();
+    }
+
+    private render(): void {
+        this.innerHTML = `
+      <div id="${this.modalId}" class="s3-browser-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-${this.triggerId}">
+        <div class="s3-browser-overlay" aria-hidden="true"></div>
+        <div class="s3-browser-container">
+          <div class="s3-browser-header">
+            <h3 id="modal-title-${this.triggerId}">${this.modalTitle}</h3>
+            <button class="s3-browser-close" data-close-modal="${this.modalId}" aria-label="Close file browser">&times;</button>
+          </div>
+          
+          <div class="s3-browser-toolbar" role="toolbar" aria-label="File browser actions">
+            <nav id="breadcrumb-${this.triggerId}" class="s3-browser-breadcrumb" aria-label="File path breadcrumb"></nav>
+            <div class="s3-browser-toolbar-actions">
+              <button class="s3-browser-btn s3-browser-btn-small" data-upload="${this.triggerId}" aria-label="Upload files">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Upload
+              </button>
+              ${!this.filesOnly ? `<button class="s3-browser-btn s3-browser-btn-small" data-create-folder="${this.triggerId}" aria-label="Create new folder">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                New Folder
+              </button>` : ''}
+              <button class="s3-browser-btn s3-browser-btn-small" data-refresh="${this.triggerId}" aria-label="Refresh file list">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+            </div>
+            <input type="file" id="upload-input-${this.triggerId}" style="display: none;" multiple aria-label="File upload input" />
+          </div>
+
+          <div id="${this.contentId}" class="s3-browser-content" role="region" aria-label="File browser content" aria-live="polite">
+            <div class="s3-browser-loading" role="status" aria-live="polite">Loading files...</div>
+          </div>
+
+          <div class="s3-browser-footer">
+            <div class="s3-browser-selected" id="selected-${this.triggerId}" role="status" aria-live="polite" aria-atomic="true">
+              No file selected
+            </div>
+            <div class="s3-browser-actions">
+              <button class="s3-browser-btn s3-browser-btn-secondary" data-close-modal="${this.modalId}">Cancel</button>
+              <button class="s3-browser-btn s3-browser-btn-primary" id="select-btn-${this.triggerId}" disabled aria-disabled="true">Select</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="upload-dialog-${this.triggerId}" class="s3-browser-upload-dialog" role="dialog" aria-modal="true" aria-labelledby="upload-dialog-title-${this.triggerId}" style="display: none;">
+        <div class="s3-browser-overlay" aria-hidden="true"></div>
+        <div class="s3-browser-dialog-container">
+          <div class="s3-browser-dialog-header">
+            <h3 id="upload-dialog-title-${this.triggerId}">Customize Filenames</h3>
+          </div>
+          <div class="s3-browser-dialog-content" id="upload-dialog-content-${this.triggerId}">
+          </div>
+          <div class="s3-browser-dialog-footer">
+            <button class="s3-browser-btn s3-browser-btn-secondary" id="upload-dialog-cancel-${this.triggerId}">Cancel</button>
+            <button class="s3-browser-btn s3-browser-btn-primary" id="upload-dialog-confirm-${this.triggerId}">Upload</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="delete-dialog-${this.triggerId}" class="s3-browser-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title-${this.triggerId}" style="display: none;">
+        <div class="s3-browser-overlay" aria-hidden="true"></div>
+        <div class="s3-browser-dialog-container s3-browser-dialog-small">
+          <div class="s3-browser-dialog-header">
+            <h3 id="delete-dialog-title-${this.triggerId}">Delete File?</h3>
+          </div>
+          <div class="s3-browser-dialog-content" id="delete-dialog-content-${this.triggerId}">
+            <p>Are you sure you want to delete this file? This action cannot be undone.</p>
+            <p class="s3-browser-delete-filename"></p>
+          </div>
+          <div class="s3-browser-dialog-footer">
+            <button class="s3-browser-btn s3-browser-btn-secondary" id="delete-dialog-cancel-${this.triggerId}">Cancel</button>
+            <button class="s3-browser-btn s3-browser-btn-danger" id="delete-dialog-confirm-${this.triggerId}">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Folder Dialog -->
+      <div id="folder-dialog-${this.triggerId}" class="s3-browser-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="folder-dialog-title-${this.triggerId}">
+        <div class="s3-browser-overlay" aria-hidden="true"></div>
+        <div class="s3-browser-dialog-container s3-browser-dialog-small">
+          <div class="s3-browser-dialog-header">
+            <h3 id="folder-dialog-title-${this.triggerId}">Create New Folder</h3>
+          </div>
+          <div class="s3-browser-dialog-content" id="folder-dialog-content-${this.triggerId}">
+            <p style="color: var(--s3-browser-text-primary);">Enter a name for the new folder:</p>
+            <input type="text" id="folder-name-input-${this.triggerId}" class="s3-browser-upload-filename" placeholder="Folder name" aria-label="Folder name" />
+          </div>
+          <div class="s3-browser-dialog-footer">
+            <button class="s3-browser-btn s3-browser-btn-secondary" id="folder-dialog-cancel-${this.triggerId}">Cancel</button>
+            <button class="s3-browser-btn s3-browser-btn-primary" id="folder-dialog-confirm-${this.triggerId}">Create</button>
+          </div>
+        </div>
+      </div>
+    `;
+    }
+
+    private attachEventListeners(): void {
+        const modal = this.querySelector<HTMLDivElement>(`#${this.modalId}`);
+        const trigger = document.getElementById(this.triggerId);
+        const targetInput = document.getElementById(this.targetInputId) as HTMLInputElement | null;
+        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        const selectedInfo = this.querySelector<HTMLDivElement>(`#selected-${this.triggerId}`);
+        const selectBtn = this.querySelector<HTMLButtonElement>(`#select-btn-${this.triggerId}`);
+        const refreshBtn = this.querySelector<HTMLButtonElement>(`[data-refresh="${this.triggerId}"]`);
+        const uploadBtn = this.querySelector<HTMLButtonElement>(`[data-upload="${this.triggerId}"]`);
+        const uploadInput = this.querySelector<HTMLInputElement>(`#upload-input-${this.triggerId}`);
+
+        if (!modal || !content || !selectedInfo || !selectBtn) return;
+
+        // Open modal
+        trigger?.addEventListener('click', () => {
+            modal.style.display = 'flex';
+            this.loadFiles();
+            // Focus the close button for accessibility
+            setTimeout(() => {
+                const closeBtn = this.querySelector<HTMLButtonElement>('.s3-browser-close');
+                closeBtn?.focus();
+            }, 100);
+        });
+
+        // Keyboard support for Escape key
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                modal.style.display = 'none';
+                this.selectedFile = null;
+                this.updateSelectedInfo();
+                trigger?.focus(); // Return focus to trigger
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+
+        // Close modal handlers
+        this.querySelectorAll<HTMLButtonElement>(`[data-close-modal="${this.modalId}"]`).forEach((btn) => {
+            btn.addEventListener('click', () => {
+                modal.style.display = 'none';
+                this.selectedFile = null;
+                this.updateSelectedInfo();
+            });
+        });
+
+        // Close on overlay click
+        this.querySelector('.s3-browser-overlay')?.addEventListener('click', () => {
+            modal.style.display = 'none';
+            this.selectedFile = null;
+            this.updateSelectedInfo();
+        });
+
+        // Refresh button
+        refreshBtn?.addEventListener('click', () => this.loadFiles());
+
+        // Upload button
+        uploadBtn?.addEventListener('click', () => {
+            uploadInput?.click();
+        });
+
+        // Create folder button
+        const createFolderBtn = this.querySelector<HTMLButtonElement>(`[data-create-folder="${this.triggerId}"]`);
+        createFolderBtn?.addEventListener('click', () => this.showCreateFolderDialog());
+
+        // Folder dialog handlers
+        const folderDialog = this.querySelector<HTMLDivElement>(`#folder-dialog-${this.triggerId}`);
+        const folderCancelBtn = this.querySelector(`#folder-dialog-cancel-${this.triggerId}`);
+        const folderConfirmBtn = this.querySelector(`#folder-dialog-confirm-${this.triggerId}`);
+        const folderNameInput = this.querySelector<HTMLInputElement>(`#folder-name-input-${this.triggerId}`);
+
+        if (folderDialog && folderCancelBtn && folderConfirmBtn && folderNameInput) {
+            folderCancelBtn.addEventListener('click', () => {
+                folderDialog.style.display = 'none';
+                folderNameInput.value = '';
+            });
+
+            folderConfirmBtn.addEventListener('click', async () => {
+                const folderName = folderNameInput.value.trim();
+                if (folderName) {
+                    await this.createFolder(folderName);
+                    folderDialog.style.display = 'none';
+                    folderNameInput.value = '';
+                }
+            });
+
+            folderNameInput.addEventListener('keydown', async (e) => {
+                if (e.key === 'Enter') {
+                    const folderName = folderNameInput.value.trim();
+                    if (folderName) {
+                        await this.createFolder(folderName);
+                        folderDialog.style.display = 'none';
+                        folderNameInput.value = '';
+                    }
+                } else if (e.key === 'Escape') {
+                    folderDialog.style.display = 'none';
+                    folderNameInput.value = '';
+                }
+            });
+        }
+
+        // File input change
+        uploadInput?.addEventListener('change', async (e) => {
+            const files = (e.target as HTMLInputElement).files;
+            if (files && files.length > 0) {
+                this.pendingFiles = Array.from(files);
+                this.showUploadDialog();
+                // Reset input
+                (e.target as HTMLInputElement).value = '';
+            }
+        });
+
+        // Drag and drop support
+        content.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            content.classList.add('s3-browser-drag-over');
+        });
+
+        content.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Only remove class if we're leaving the content area itself
+            if (e.target === content) {
+                content.classList.remove('s3-browser-drag-over');
+            }
+        });
+
+        content.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            content.classList.remove('s3-browser-drag-over');
+
+            const files = e.dataTransfer?.files;
+            if (files && files.length > 0) {
+                this.pendingFiles = Array.from(files);
+                this.showUploadDialog();
+            }
+        });
+
+        // Select button
+        selectBtn?.addEventListener('click', async () => {
+            if (!this.selectedFile) return;
+
+            let value = '';
+
+            if (this.returnType === 'url') {
+                const response = await fetch(this.apiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'publicUrl', key: this.selectedFile.key }),
+                });
+                const data = await response.json();
+                value = data.url;
+            } else if (this.returnType === 'identifier') {
+                value = `s3-file://${this.selectedFile.key}`;
+            } else {
+                value = this.selectedFile.key;
+            }
+
+            if (targetInput) {
+                targetInput.value = value;
+                targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            modal.style.display = 'none';
+            this.selectedFile = null;
+            this.updateSelectedInfo();
+        });
+    }
+
+    private async loadFiles(): Promise<void> {
+        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        if (!content) return;
+
+        content.innerHTML = '<div class="s3-browser-loading">Loading files...</div>';
+
+        try {
+            const response = await fetch(this.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'list', prefix: this.currentPath }),
+            });
+            const data = await response.json();
+            const files: S3File[] = data.files;
+
+            this.updateBreadcrumb();
+
+            // Process files and folders
+            const folders = new Set<string>();
+            const fileItems: S3File[] = [];
+
+            files.forEach((file) => {
+                const relativePath = file.key.substring(this.currentPath.length);
+                const parts = relativePath.split('/');
+
+                if (parts.length > 1 && parts[0]) {
+                    folders.add(parts[0]);
+                } else if (parts[0] && parts[0] !== '.folder') {
+                    // Filter by file type if specified
+                    if (this.fileTypes.length > 0) {
+                        const ext = parts[0].split('.').pop()?.toLowerCase();
+                        const mimeType = this.getMimeType(ext);
+                        if (!this.fileTypes.includes(mimeType)) return;
+                    }
+                    fileItems.push(file);
+                }
+            });
+
+            if (folders.size === 0 && fileItems.length === 0) {
+                content.innerHTML = `
+          <div class="s3-browser-empty" role="status" aria-live="polite">
+            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+            <p>No files here</p>
+          </div>
+        `;
+                return;
+            }
+
+            let html = '<div class="s3-browser-grid" role="grid" aria-label="Files and folders">';
+
+            // Add folders (unless filesOnly is true)
+            if (!this.filesOnly) {
+                folders.forEach((folder) => {
+                    html += `
+            <div class="s3-browser-item s3-browser-folder" data-folder="${folder}" role="gridcell" tabindex="0" aria-label="Folder: ${folder}">
+              <div class="s3-browser-icon" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                </svg>
+              </div>
+              <div class="s3-browser-name">${folder}</div>
+            </div>
+          `;
+                });
+            }
+
+            // Add files
+            fileItems.forEach((file) => {
+                const fileName = file.key.split('/').pop();
+                const displayName = this.formatFileName(fileName);
+                const fileExt = fileName?.split('.').pop()?.toLowerCase();
+                const fileSize = this.formatBytes(file.size);
+
+                html += `
+          <div class="s3-browser-item s3-browser-file" data-file='${JSON.stringify(file)}' role="gridcell" tabindex="0" aria-label="File: ${displayName}, Size: ${fileSize}">
+            <button class="s3-browser-delete-btn" data-delete-file='${JSON.stringify(file)}' aria-label="Delete ${displayName}" title="Delete file">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+            <div class="s3-browser-icon" aria-hidden="true">
+              ${this.getFileIcon(fileExt)}
+            </div>
+            <div class="s3-browser-name">${displayName}</div>
+            <div class="s3-browser-size">${fileSize}</div>
+          </div>
+        `;
+            });
+
+            html += '</div>';
+            content.innerHTML = html;
+
+            // Add click handlers for folders
+            content.querySelectorAll<HTMLDivElement>('[data-folder]').forEach((el) => {
+                const handleFolderActivation = () => {
+                    const folder = el.getAttribute('data-folder');
+                    if (folder) this.navigateToFolder(folder);
+                };
+
+                el.addEventListener('click', handleFolderActivation);
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleFolderActivation();
+                    }
+                });
+            });
+
+            // Add click handlers for files
+            content.querySelectorAll<HTMLDivElement>('[data-file]').forEach((el) => {
+                const handleFileSelection = () => {
+                    content.querySelectorAll('.s3-browser-file').forEach((f) => {
+                        f.classList.remove('selected');
+                        f.setAttribute('aria-selected', 'false');
+                    });
+                    el.classList.add('selected');
+                    el.setAttribute('aria-selected', 'true');
+
+                    const fileData = el.getAttribute('data-file');
+                    if (fileData) {
+                        const file: S3File = JSON.parse(fileData);
+                        this.selectedFile = file;
+                        this.updateSelectedInfo();
+                    }
+                };
+
+                el.addEventListener('click', handleFileSelection);
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleFileSelection();
+                    }
+                });
+            });
+
+            // Add delete button handlers
+            content.querySelectorAll<HTMLButtonElement>('[data-delete-file]').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent file selection
+                    const fileData = btn.getAttribute('data-delete-file');
+                    if (fileData) {
+                        const file: S3File = JSON.parse(fileData);
+                        this.showDeleteConfirmation(file);
+                    }
+                });
+            });
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            content.innerHTML = `<div class="s3-browser-error" role="alert" aria-live="assertive">Failed to load files: ${errorMessage}</div>`;
+        }
+    }
+
+    private navigateToFolder(folderName: string): void {
+        this.currentPath = `${this.currentPath}${folderName}/`;
+        this.selectedFile = null;
+        this.updateSelectedInfo();
+        this.loadFiles();
+    }
+
+    private navigateToPath(path: string): void {
+        this.currentPath = path;
+        this.selectedFile = null;
+        this.updateSelectedInfo();
+        this.loadFiles();
+    }
+
+    private updateBreadcrumb(): void {
+        const breadcrumb = this.querySelector<HTMLDivElement>(`#breadcrumb-${this.triggerId}`);
+        if (!breadcrumb) return;
+
+        if (!this.currentPath) {
+            breadcrumb.innerHTML = `
+        <span class="s3-browser-crumb active">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+          Root
+        </span>
+      `;
+            return;
+        }
+
+        const parts = this.currentPath.split('/').filter((p) => p);
+        let path = '';
+
+        const crumbs: string[] = [
+            `
+      <span class="s3-browser-crumb" data-path="">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+        </svg>
+        Root
+      </span>
+    `,
+        ];
+
+        parts.forEach((part, index) => {
+            path += part + '/';
+            const isLast = index === parts.length - 1;
+            crumbs.push(`<span class="s3-browser-separator">/</span>`);
+            if (isLast) {
+                crumbs.push(`<span class="s3-browser-crumb active">${part}</span>`);
+            } else {
+                crumbs.push(`<span class="s3-browser-crumb" data-path="${path}">${part}</span>`);
+            }
+        });
+
+        breadcrumb.innerHTML = crumbs.join('');
+
+        // Add click handlers to breadcrumbs
+        breadcrumb.querySelectorAll<HTMLSpanElement>('[data-path]').forEach((el) => {
+            el.addEventListener('click', () => {
+                const pathAttr = el.getAttribute('data-path');
+                if (pathAttr !== null) this.navigateToPath(pathAttr);
+            });
+        });
+    }
+
+    private updateSelectedInfo(): void {
+        const selectedInfo = this.querySelector<HTMLDivElement>(`#selected-${this.triggerId}`);
+        const selectBtn = this.querySelector<HTMLButtonElement>(`#select-btn-${this.triggerId}`);
+
+        if (!selectedInfo || !selectBtn) return;
+
+        if (this.selectedFile) {
+            const fileName = this.selectedFile.key.split('/').pop();
+            selectedInfo.innerHTML = `Selected: <strong>${fileName}</strong>`;
+            selectBtn.disabled = false;
+        } else {
+            selectedInfo.textContent = 'No file selected';
+            selectBtn.disabled = true;
+        }
+    }
+
+    private formatBytes(bytes: number): string {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    private formatFileName(fileName: string | undefined): string {
+        if (!fileName) return '';
+
+        // If the filename starts with a timestamp-like pattern (e.g., 1765388443236-example.png)
+        // Extract just the meaningful part after the timestamp
+        const timestampPattern = /^\d{10,}-(.+)$/;
+        const match = fileName.match(timestampPattern);
+
+        if (match) {
+            return match[1]; // Return everything after the timestamp and dash
+        }
+
+        return fileName;
+    }
+
+    private getMimeType(ext: string | undefined): string {
+        if (!ext) return 'application/octet-stream';
+
+        const types: MimeTypeMap = {
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg',
+            png: 'image/png',
+            gif: 'image/gif',
+            webp: 'image/webp',
+            svg: 'image/svg+xml',
+            mp4: 'video/mp4',
+            webm: 'video/webm',
+            mp3: 'audio/mpeg',
+            wav: 'audio/wav',
+            pdf: 'application/pdf',
+            zip: 'application/zip',
+        };
+        return types[ext] || 'application/octet-stream';
+    }
+
+    private getFileIcon(ext: string | undefined): string {
+        if (!ext) return this.getDefaultIcon();
+
+        // Images
+        const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'tiff', 'tif', 'heic', 'heif', 'avif'];
+        if (imageExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>';
+        }
+
+        // Videos
+        const videoExts = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v', 'mpg', 'mpeg', '3gp', 'ogv'];
+        if (videoExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+        }
+
+        // Audio
+        const audioExts = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'aiff', 'ape', 'opus'];
+        if (audioExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>';
+        }
+
+        // Code files
+        const codeExts = ['js', 'jsx', 'ts', 'tsx', 'py', 'java', 'c', 'cpp', 'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'dart', 'scala', 'r', 'sh', 'bash', 'zsh', 'fish', 'ps1'];
+        if (codeExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>';
+        }
+
+        // Markup/Config files
+        const markupExts = ['html', 'xml', 'json', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf', 'config', 'env'];
+        if (markupExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>';
+        }
+
+        // Stylesheets
+        const styleExts = ['css', 'scss', 'sass', 'less', 'styl'];
+        if (styleExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>';
+        }
+
+        // Documents
+        const docExts = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'tex', 'wpd', 'pages'];
+        if (docExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>';
+        }
+
+        // Spreadsheets
+        const spreadsheetExts = ['xls', 'xlsx', 'csv', 'ods', 'numbers', 'tsv'];
+        if (spreadsheetExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+        }
+
+        // Presentations
+        const presentationExts = ['ppt', 'pptx', 'odp', 'key'];
+        if (presentationExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>';
+        }
+
+        // Archives
+        const archiveExts = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz', 'tbz2', 'zipx', 'iso'];
+        if (archiveExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>';
+        }
+
+        // Database
+        const dbExts = ['sql', 'db', 'sqlite', 'sqlite3', 'mdb', 'accdb'];
+        if (dbExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>';
+        }
+
+        // Fonts
+        const fontExts = ['ttf', 'otf', 'woff', 'woff2', 'eot'];
+        if (fontExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>';
+        }
+
+        // Executables
+        const execExts = ['exe', 'app', 'dmg', 'pkg', 'deb', 'rpm', 'apk', 'msi', 'bin'];
+        if (execExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>';
+        }
+
+        // Markdown
+        const markdownExts = ['md', 'markdown', 'mdx'];
+        if (markdownExts.includes(ext)) {
+            return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>';
+        }
+
+        return this.getDefaultIcon();
+    }
+
+    private getDefaultIcon(): string {
+        return '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+    }
+
+    private showUploadDialog(): void {
+        const dialog = this.querySelector<HTMLDivElement>(`#upload-dialog-${this.triggerId}`);
+        const dialogContent = this.querySelector<HTMLDivElement>(`#upload-dialog-content-${this.triggerId}`);
+        const cancelBtn = this.querySelector<HTMLButtonElement>(`#upload-dialog-cancel-${this.triggerId}`);
+        const confirmBtn = this.querySelector<HTMLButtonElement>(`#upload-dialog-confirm-${this.triggerId}`);
+
+        if (!dialog || !dialogContent) return;
+
+        // Build file list with input fields
+        let html = '<div class="s3-browser-upload-files">';
+        this.pendingFiles.forEach((file, index) => {
+            const timestamp = Date.now();
+            const defaultName = `${timestamp}-${file.name}`;
+            html += `
+                <div class="s3-browser-upload-file-item">
+                    <label for="upload-name-${this.triggerId}-${index}">
+                        <strong>Original:</strong> ${file.name}
+                        <span class="s3-browser-file-size">(${this.formatBytes(file.size)})</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="upload-name-${this.triggerId}-${index}" 
+                        class="s3-browser-filename-input" 
+                        value="${defaultName}"
+                        data-file-index="${index}"
+                        aria-label="Filename for ${file.name}"
+                    />
+                </div>
+            `;
+        });
+        html += '</div>';
+        dialogContent.innerHTML = html;
+
+        // Show dialog
+        dialog.style.display = 'flex';
+
+        // Focus first input
+        setTimeout(() => {
+            const firstInput = dialogContent.querySelector<HTMLInputElement>('input');
+            firstInput?.focus();
+            firstInput?.select();
+        }, 100);
+
+        // Cancel handler
+        const handleCancel = () => {
+            dialog.style.display = 'none';
+            this.pendingFiles = [];
+        };
+
+        cancelBtn?.addEventListener('click', handleCancel, { once: true });
+        dialog.querySelector('.s3-browser-overlay')?.addEventListener('click', handleCancel, { once: true });
+
+        // Confirm handler
+        confirmBtn?.addEventListener('click', async () => {
+            const customNames: { [key: number]: string } = {};
+            dialogContent.querySelectorAll<HTMLInputElement>('.s3-browser-filename-input').forEach((input) => {
+                const index = parseInt(input.dataset.fileIndex || '0');
+                customNames[index] = input.value;
+            });
+
+            dialog.style.display = 'none';
+            await this.uploadFilesWithCustomNames(customNames);
+            this.pendingFiles = [];
+        }, { once: true });
+
+        // Escape key handler
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && dialog.style.display === 'flex') {
+                handleCancel();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+
+    private showDeleteConfirmation(file: S3File): void {
+        this.fileToDelete = file;
+        const dialog = this.querySelector<HTMLDivElement>(`#delete-dialog-${this.triggerId}`);
+        const filenameEl = dialog?.querySelector<HTMLParagraphElement>('.s3-browser-delete-filename');
+        const cancelBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-cancel-${this.triggerId}`);
+        const confirmBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-confirm-${this.triggerId}`);
+
+        if (!dialog || !filenameEl) return;
+
+        const fileName = file.key.split('/').pop();
+        const displayName = this.formatFileName(fileName);
+        filenameEl.textContent = displayName;
+
+        // Show dialog
+        dialog.style.display = 'flex';
+
+        // Focus cancel button
+        setTimeout(() => cancelBtn?.focus(), 100);
+
+        // Cancel handler
+        const handleCancel = () => {
+            dialog.style.display = 'none';
+            this.fileToDelete = null;
+        };
+
+        cancelBtn?.addEventListener('click', handleCancel, { once: true });
+        dialog.querySelector('.s3-browser-overlay')?.addEventListener('click', handleCancel, { once: true });
+
+        // Confirm handler
+        confirmBtn?.addEventListener('click', async () => {
+            dialog.style.display = 'none';
+            if (this.fileToDelete) {
+                await this.deleteFile(this.fileToDelete);
+            }
+            this.fileToDelete = null;
+        }, { once: true });
+
+        // Escape key handler
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && dialog.style.display === 'flex') {
+                handleCancel();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+
+    private async deleteFile(file: S3File): Promise<void> {
+        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        if (!content) return;
+
+        content.innerHTML = '<div class="s3-browser-loading" role="status">Deleting file...</div>';
+
+        try {
+            const response = await fetch(this.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', key: file.key }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Delete failed');
+            }
+
+            // Reload files
+            await this.loadFiles();
+        } catch (error) {
+            console.error('Delete error:', error);
+            content.innerHTML = `
+                <div class="s3-browser-error" role="alert">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>Failed to delete file</p>
+                    <p style="font-size: 0.875rem; opacity: 0.7;">${error instanceof Error ? error.message : 'Unknown error'}</p>
+                </div>
+            `;
+            setTimeout(() => this.loadFiles(), 2000);
+        }
+    }
+
+    private showCreateFolderDialog(): void {
+        const folderDialog = this.querySelector<HTMLDivElement>(`#folder-dialog-${this.triggerId}`);
+        const folderNameInput = this.querySelector<HTMLInputElement>(`#folder-name-input-${this.triggerId}`);
+
+        if (folderDialog && folderNameInput) {
+            folderDialog.style.display = 'flex';
+            folderNameInput.value = '';
+            setTimeout(() => folderNameInput.focus(), 100);
+        }
+    }
+
+    private async createFolder(folderName: string): Promise<void> {
+        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        if (!content) return;
+
+        content.innerHTML = '<div class="s3-browser-loading" role="status">Creating folder...</div>';
+
+        try {
+            // Sanitize folder name
+            const sanitized = folderName.replace(/[^a-zA-Z0-9-_]/g, '-');
+            const folderKey = `${this.currentPath}${sanitized}/.folder`;
+
+            // Create a placeholder file to establish the folder (same as index.astro)
+            const response = await fetch(this.apiEndpoint, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'x-s3-key': folderKey
+                },
+                body: '',
+            });
+
+            if (!response.ok) {
+                throw new Error('Create folder failed');
+            }
+
+            // Reload files
+            await this.loadFiles();
+        } catch (error) {
+            console.error('Create folder error:', error);
+            content.innerHTML = `
+                <div class="s3-browser-error" role="alert">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>Failed to create folder</p>
+                    <p style="font-size: 0.875rem; opacity: 0.7;">${error instanceof Error ? error.message : 'Unknown error'}</p>
+                </div>
+            `;
+            setTimeout(() => this.loadFiles(), 2000);
+        }
+    }
+
+    private async uploadFilesWithCustomNames(customNames: { [key: number]: string }): Promise<void> {
+        if (this.isUploading) return;
+
+        this.isUploading = true;
+        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        if (!content) return;
+
+        const totalFiles = this.pendingFiles.length;
+        let completedFiles = 0;
+
+        content.innerHTML = `
+            <div class="s3-browser-uploading" role="status" aria-live="polite">
+                <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p>Uploading files...</p>
+                <div class="s3-browser-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${totalFiles}" aria-valuenow="0" aria-label="Upload progress">
+                    <div class="s3-browser-progress-bar" style="width: 0%"></div>
+                </div>
+                <p class="s3-browser-progress-text" aria-live="polite">0 / ${totalFiles} files uploaded</p>
+            </div>
+        `;
+
+        const progressBar = content.querySelector<HTMLDivElement>('.s3-browser-progress-bar');
+        const progressText = content.querySelector<HTMLParagraphElement>('.s3-browser-progress-text');
+
+        try {
+            for (let i = 0; i < this.pendingFiles.length; i++) {
+                const file = this.pendingFiles[i];
+                const customName = customNames[i] || `${Date.now()}-${file.name}`;
+                await this.uploadSingleFile(file, customName);
+                completedFiles++;
+
+                const progress = (completedFiles / totalFiles) * 100;
+                if (progressBar) {
+                    progressBar.style.width = `${progress}%`;
+                    const progressContainer = progressBar.parentElement;
+                    progressContainer?.setAttribute('aria-valuenow', completedFiles.toString());
+                }
+                if (progressText) progressText.textContent = `${completedFiles} / ${totalFiles} files uploaded`;
+            }
+
+            // Reload files after upload
+            await this.loadFiles();
+        } catch (error) {
+            console.error('Upload error:', error);
+            content.innerHTML = `
+                <div class="s3-browser-error" role="alert" aria-live="assertive">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>Upload failed</p>
+                    <p style="font-size: 0.875rem; opacity: 0.7;">${error instanceof Error ? error.message : 'Unknown error'}</p>
+                </div>
+            `;
+        } finally {
+            this.isUploading = false;
+        }
+    }
+
+    private async uploadSingleFile(file: File, customName?: string): Promise<void> {
+        const fileName = customName || `${Date.now()}-${file.name}`;
+        const key = this.currentPath ? `${this.currentPath}${fileName}` : fileName;
+
+        // Upload directly using PUT endpoint
+        const response = await fetch(this.apiEndpoint, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': file.type || 'application/octet-stream',
+                'x-s3-key': key,
+            },
+            body: file,
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Upload failed');
+        }
+    }
+}
+
+// Register the custom element
+customElements.define('s3-file-browser', S3FileBrowser);
