@@ -40,11 +40,11 @@ async function generateUrlMetadata(key: string): Promise<UrlMetadata> {
     return { url, isPermanent: false, expiresAt: inSevenDays.getTime() };
 }
 
-export class S3ApiService<C extends unknown, R extends unknown> implements StorageApiBuilderDefinition<C, R, UrlMetadata> {
+export class S3ApiService<C extends unknown, R extends unknown> implements StorageApiBuilderDefinition<C, R> {
     driver;
     urlMappingService
 
-    constructor(driver: ContextDriverDefinition<C, R>, urlMappingService: UrlMappingServiceDefinition<UrlMetadata>) {
+    constructor(driver: ContextDriverDefinition<C, R>, urlMappingService: UrlMappingServiceDefinition) {
         this.driver = driver;
         this.urlMappingService = urlMappingService;
     }

@@ -1,7 +1,7 @@
 // URL Mapping Service - handles resolution and auto-refresh of URLs
 import type { UrlMetadata, UrlMapping, UrlMappingServiceDefinition, UrlMappingDatabaseDefinition } from '../definitions';
 
-export class UrlMappingService implements UrlMappingServiceDefinition<UrlMetadata> {
+export class UrlMappingService implements UrlMappingServiceDefinition {
   database;
 
   constructor(database: UrlMappingDatabaseDefinition) {

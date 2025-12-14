@@ -1,5 +1,5 @@
 // In-memory database implementation (swap with SQLite/PostgreSQL for production)
-import type { UrlMapping, UrlMappingDatabaseDefinition } from '../definitions';
+import type { UrlMapping, UrlMappingDatabaseDefinition } from '../DynamicStorageApi/definitions';
 
 export class InMemoryDatabase implements UrlMappingDatabaseDefinition {
   private store: Map<string, UrlMapping> = new Map();

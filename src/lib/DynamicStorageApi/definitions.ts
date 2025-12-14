@@ -33,10 +33,10 @@ export interface ContextDriverDefinition<C extends unknown, R extends unknown> {
 
 export type StorageAPIEndpointFn<C extends unknown, R extends unknown> = (context: C) => Promise<R>;
 
-export interface StorageApiBuilderDefinition<C extends unknown, R extends unknown, U extends unknown> {
+export interface StorageApiBuilderDefinition<C extends unknown, R extends unknown> {
     driver: ContextDriverDefinition<C, R>;
-    urlMappingService: UrlMappingServiceDefinition<U>;
-    resolveUrl: (identifier: string) => Promise<U>;
+    urlMappingService: UrlMappingServiceDefinition;
+    resolveUrl: (identifier: string) => Promise<UrlMetadata>;
     getPOST(): StorageAPIEndpointFn<C, R>;
     getPUT(): StorageAPIEndpointFn<C, R>;
 }
@@ -49,18 +49,18 @@ export interface UrlMappingDatabaseDefinition {
     getAll(): Promise<UrlMapping[]>;
 }
 
-export interface UrlMappingServiceDefinition<U extends unknown> {
+export interface UrlMappingServiceDefinition {
     database: UrlMappingDatabaseDefinition;
     resolve(
         identifier: string,
-        refreshCallback: (key: string) => Promise<U>
-    ): Promise<U>;
+        refreshCallback: (key: string) => Promise<UrlMetadata>
+    ): Promise<UrlMetadata>;
     register(
         identifier: string,
-        metadata: U,
+        metadata: UrlMetadata,
     ): Promise<void>;
     delete(identifier: string): Promise<void>;
     cleanup(): Promise<number>;
-    getAll(): Promise<U[]>;
+    getAll(): Promise<UrlMetadata[]>;
     createIdentifier(key: string): string;
 }

@@ -1,5 +1,5 @@
 import { AstroContextDriver } from './DynamicStorageApi/core/astro-context';
-import { InMemoryDatabase } from './DynamicStorageApi/core/database';
+import { InMemoryDatabase } from './in-memory-db/database';
 import { UrlMappingService } from './DynamicStorageApi/core/url-mapping';
 import { S3ApiService } from './s3/s3-service';
 
