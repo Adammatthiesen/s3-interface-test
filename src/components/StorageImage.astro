@@ -1,22 +1,22 @@
 ---
-import { s3ApiService } from '../lib/s3-api';
+import { s3ApiService } from '../lib/api-core';
 
 /**
- * S3Image Component
+ * StorageImage Component
  * 
- * Displays an image from S3 storage using the URL mapping system.
- * Supports both s3-file:// identifiers and direct S3 keys.
+ * Displays an image from cloud storage using the URL mapping system.
+ * Supports both storage-file:// identifiers and direct storage keys.
  * 
  * @example
- * <S3Image identifier="s3-file://uploads/photo.jpg" alt="My Photo" />
- * <S3Image s3Key="uploads/photo.jpg" alt="My Photo" class="rounded" />
+ * <StorageImage identifier="storage-file://uploads/photo.jpg" alt="My Photo" />
+ * <StorageImage storageKey="uploads/photo.jpg" alt="My Photo" class="rounded" />
  */
 
 interface Props {
-  /** S3 file identifier (e.g., "s3-file://path/to/image.jpg") */
+  /** Storage file identifier (e.g., "storage-file://path/to/image.jpg") */
   identifier?: string;
-  /** Direct S3 key (will be converted to identifier) */
-  s3Key?: string;
+  /** Direct storage key (will be converted to identifier) */
+  storageKey?: string;
   /** Alt text for the image */
   alt: string;
   /** Optional CSS class */
@@ -33,7 +33,7 @@ interface Props {
 
 const { 
   identifier, 
-  s3Key, 
+  storageKey, 
   alt, 
   class: className = '', 
   width, 
@@ -42,13 +42,13 @@ const {
   fit = 'cover'
 } = Astro.props;
 
-// Validate that either identifier or s3Key is provided
-if (!identifier && !s3Key) {
-  throw new Error('S3Image: Either "identifier" or "s3Key" prop is required');
+// Validate that either identifier or storageKey is provided
+if (!identifier && !storageKey) {
+  throw new Error('S3Image: Either "identifier" or "storageKey" prop is required');
 }
 
-// Create identifier from s3Key if needed
-const fileIdentifier = identifier || `s3-file://${s3Key}`;
+// Create identifier from storageKey if needed
+const fileIdentifier = identifier || `storage-file://${storageKey}`;
 
 // Fetch URL from the mapping service
 let imageUrl = '';

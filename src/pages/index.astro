@@ -1,450 +1,307 @@
 ---
+import StorageFileBrowser from '../components/StorageFileBrowser.astro';
 import '../styles.css';
 ---
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>S3 Storage Manager</title>
+  <title>StorageFileBrowser File Browser Demo</title>
   <style>
+    .demo-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+
+    .demo-section {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .demo-section h2 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .input-with-button {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .form-input {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-family: monospace;
+    }
+
+    .browse-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .browse-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .code-block {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.875rem;
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+
+    .preview-box {
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 2px dashed #dee2e6;
+      border-radius: 6px;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-box img {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 4px;
+    }
+
+    .preview-box.empty {
+      color: #6c757d;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>S3 Storage Manager</h1>
-      <p class="subtitle">Upload, manage, and download files from your S3-compatible storage</p>
-      <button id="testBtn" class="btn" style="margin-top: 1rem; font-size: 0.875rem; padding: 0.5rem 1rem;">Test Connection</button>
+  <div class="demo-container">
+    <div class="demo-section">
+      <h2>StorageFileBrowser File Browser Component Demo</h2>
+      <p style="color: #6c757d;">Click the "Browse" buttons to open the file browser and select files from your storage.</p>
     </div>
 
-    <div class="content">
-      <div class="upload-section">
-        <h3 style="margin-bottom: 1rem;">Upload Files</h3>
-        <div class="file-input-wrapper">
-          <input type="file" id="fileInput" multiple>
-          <label for="fileInput" class="btn">Choose Files</label>
+    <!-- Example 1: Select any file (URL) -->
+    <div class="demo-section">
+      <h2>Example 1: Select File URL</h2>
+      <div class="form-group">
+        <label for="file-url">File URL:</label>
+        <div class="input-with-button">
+          <input type="text" id="file-url" class="form-input" placeholder="Click Browse to select a file..." readonly>
+          <button id="browse-url-btn" class="browse-btn">Browse</button>
         </div>
-        <p id="selectedFiles" style="margin-top: 1rem; color: #6c757d;"></p>
-        <button id="uploadBtn" class="btn" style="margin-top: 1rem; display: none;">Upload</button>
       </div>
+      <div class="code-block">
+&lt;StorageFileBrowser 
+  triggerId="browse-url-btn" 
+  targetInputId="file-url"
+  returnType="url"
+/&gt;
+      </div>
+    </div>
 
-      <div id="status"></div>
-
-      <div class="files-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h2>Your Files</h2>
-          <button id="createFolderBtn" class="btn btn-small">+ New Folder</button>
+    <!-- Example 2: Select image only (identifier) -->
+    <div class="demo-section">
+      <h2>Example 2: Select Image (Identifier)</h2>
+      <div class="form-group">
+        <label for="image-identifier">Image Identifier:</label>
+        <div class="input-with-button">
+          <input type="text" id="image-identifier" class="form-input" placeholder="Select an image..." readonly>
+          <button id="browse-image-btn" class="browse-btn">Browse Images</button>
         </div>
-        <div id="breadcrumb" class="breadcrumb"></div>
-        <div id="fileList" class="file-list"></div>
       </div>
+      <div id="image-preview" class="preview-box empty">
+        No image selected
+      </div>
+      <div class="code-block">
+&lt;StorageFileBrowser 
+  triggerId="browse-image-btn" 
+  targetInputId="image-identifier"
+  title="Select Image"
+  fileTypes={['image/jpeg', 'image/png', 'image/webp', 'image/gif']}
+  returnType="identifier"
+/&gt;
+      </div>
+    </div>
+
+    <!-- Example 3: Select Storage key only -->
+    <div class="demo-section">
+      <h2>Example 3: Select Storage Key</h2>
+      <div class="form-group">
+        <label for="storage-key">Storage Key:</label>
+        <div class="input-with-button">
+          <input type="text" id="storage-key" class="form-input" placeholder="Select a file..." readonly>
+          <button id="browse-key-btn" class="browse-btn">Browse</button>
+        </div>
+      </div>
+      <div class="code-block">
+&lt;StorageFileBrowser 
+  triggerId="browse-key-btn" 
+  targetInputId="storage-key"
+  returnType="key"
+/&gt;
+      </div>
+    </div>
+
+    <!-- Example 4: Files only (no folders) -->
+    <div class="demo-section">
+      <h2>Example 4: Files Only (No Folder Navigation)</h2>
+      <div class="form-group">
+        <label for="file-only">File URL:</label>
+        <div class="input-with-button">
+          <input type="text" id="file-only" class="form-input" placeholder="Select a file..." readonly>
+          <button id="browse-files-btn" class="browse-btn">Browse Files</button>
+        </div>
+      </div>
+      <div class="code-block">
+&lt;StorageFileBrowser 
+  triggerId="browse-files-btn" 
+  targetInputId="file-only"
+  filesOnly={true}
+  returnType="url"
+/&gt;
+      </div>
+    </div>
+
+    <!-- Props Documentation -->
+    <div class="demo-section">
+      <h2>Component Props</h2>
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: #f8f9fa; text-align: left;">
+            <th style="padding: 0.5rem; border: 1px solid #dee2e6;">Prop</th>
+            <th style="padding: 0.5rem; border: 1px solid #dee2e6;">Type</th>
+            <th style="padding: 0.5rem; border: 1px solid #dee2e6;">Default</th>
+            <th style="padding: 0.5rem; border: 1px solid #dee2e6;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>triggerId</code></td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">string</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">required</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">ID of button that opens the browser</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>targetInputId</code></td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">string</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">required</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">ID of input to populate with selected file</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>title</code></td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">string</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">'Select File'</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">Modal title</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>fileTypes</code></td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">string[]</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">[]</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">Filter by MIME types (e.g., ['image/jpeg', 'image/png'])</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>filesOnly</code></td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">boolean</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">false</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">Hide folders, show only files</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><code>returnType</code></td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">'url' | 'identifier' | 'key'</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">'url'</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">What to return: URL, storage-file:// identifier, or storage key</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Public URL Modal -->
-  <div id="urlModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Public URL</h3>
-        <button class="modal-close" onclick="closeUrlModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p style="margin-bottom: 0.5rem; color: #6c757d; font-size: 0.875rem;">This URL will be valid for 7 days:</p>
-        <div class="url-display">
-          <input type="text" id="publicUrlInput" readonly class="url-input">
-          <button class="btn btn-small" onclick="copyUrl()">Copy</button>
-        </div>
-        <p style="margin-top: 0.5rem; color: #6c757d; font-size: 0.875rem;">You can also open the URL directly:</p>
-        <button class="btn" style="margin-top: 0.5rem; width: 100%;" onclick="openUrl()">Open in New Tab</button>
-      </div>
-    </div>
-  </div>
+  <!-- Include the file browser components -->
+  <StorageFileBrowser 
+    triggerId="browse-url-btn" 
+    targetInputId="file-url"
+    returnType="url"
+  />
 
-  <script is:inline>
-    const fileInput = document.getElementById('fileInput');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const testBtn = document.getElementById('testBtn');
-    const createFolderBtn = document.getElementById('createFolderBtn');
-    const selectedFiles = document.getElementById('selectedFiles');
-    const fileList = document.getElementById('fileList');
-    const breadcrumb = document.getElementById('breadcrumb');
-    const status = document.getElementById('status');
+  <StorageFileBrowser 
+    triggerId="browse-image-btn" 
+    targetInputId="image-identifier"
+    title="Select Image"
+    fileTypes={['image/jpeg', 'image/png', 'image/webp', 'image/gif']}
+    returnType="identifier"
+  />
 
-    let filesToUpload = [];
-    let currentPath = '';
+  <StorageFileBrowser 
+    triggerId="browse-key-btn" 
+    targetInputId="storage-key"
+    returnType="key"
+  />
 
-    createFolderBtn.addEventListener('click', createFolder);
+  <StorageFileBrowser 
+    triggerId="browse-files-btn" 
+    targetInputId="file-only"
+    filesOnly={true}
+    returnType="url"
+  />
 
-    testBtn.addEventListener('click', async () => {
-      testBtn.disabled = true;
-      testBtn.innerHTML = '<span class="loading"></span>';
-      
-      try {
-        const result = await fetch('/api/s3', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'test' }),
-        }).then(r => r.json());
+  <script>
+    // Preview image when identifier changes
+    const imageIdentifierInput = document.getElementById('image-identifier') as HTMLInputElement;
+    const imagePreview = document.getElementById('image-preview') as HTMLElement;
 
-        if (result.success) {
-          showStatus(`✓ Connected to ${result.provider || 'S3-compatible storage'}`, 'success');
-        } else {
-          showStatus(`✗ Connection failed: ${result.error}`, 'error');
-        }
-      } catch (err) {
-        showStatus(`✗ Connection failed: ${err.message}`, 'error');
-      } finally {
-        testBtn.disabled = false;
-        testBtn.textContent = 'Test Connection';
-      }
-    });
-
-    fileInput.addEventListener('change', (e) => {
-      filesToUpload = Array.from(e.target.files);
-      if (filesToUpload.length > 0) {
-        selectedFiles.textContent = `${filesToUpload.length} file(s) selected`;
-        uploadBtn.style.display = 'inline-block';
-      } else {
-        selectedFiles.textContent = '';
-        uploadBtn.style.display = 'none';
-      }
-    });
-
-    uploadBtn.addEventListener('click', uploadFiles);
-
-    async function uploadFiles() {
-      if (filesToUpload.length === 0) return;
-
-      uploadBtn.disabled = true;
-      uploadBtn.innerHTML = '<span class="loading"></span>';
-      showStatus('Uploading files...', 'success');
-
-      try {
-        for (const file of filesToUpload) {
-          const key = `${currentPath}${Date.now()}-${file.name}`;
-          
-          // Upload directly to our API endpoint (server-side S3 upload)
-          const response = await fetch('/api/s3', {
-            method: 'PUT',
-            headers: { 
-              'Content-Type': file.type,
-              'x-s3-key': key
-            },
-            body: file,
-          });
-
-          if (!response.ok) {
-            throw new Error('Upload failed');
-          }
-        }
-
-        showStatus('Upload successful!', 'success');
-        fileInput.value = '';
-        filesToUpload = [];
-        selectedFiles.textContent = '';
-        uploadBtn.style.display = 'none';
-        loadFiles();
-      } catch (err) {
-        showStatus('Upload failed: ' + err.message, 'error');
-      } finally {
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = 'Upload';
-      }
-    }
-
-    async function loadFiles() {
-      try {
-        const { files } = await fetch('/api/s3', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'list', prefix: currentPath }),
-        }).then(r => r.json());
-
-        updateBreadcrumb();
-
-        // Process files and folders
-        const folders = new Set();
-        const fileItems = [];
-
-        files.forEach(file => {
-          const relativePath = file.key.substring(currentPath.length);
-          const parts = relativePath.split('/');
-          
-          if (parts.length > 1 && parts[0]) {
-            // This is a folder or file in a subfolder
-            folders.add(parts[0]);
-          } else if (parts[0]) {
-            // This is a file in the current directory
-            fileItems.push(file);
-          }
-        });
-
-        if (folders.size === 0 && fileItems.length === 0) {
-          fileList.innerHTML = `
-            <div class="empty-state">
-              <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-              </svg>
-              <p>No files or folders here</p>
-            </div>
-          `;
-        } else {
-          const folderHTML = Array.from(folders).sort().map(folder => `
-            <div class="file-item folder-item" onclick="navigateToFolder('${folder}')">
-              <div class="file-info">
-                <div class="file-name file-name-clickable">
-                  <svg class="folder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                  </svg>
-                  ${folder}
-                </div>
-                <div class="file-meta">Folder</div>
-              </div>
-              <div class="file-actions">
-                <button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFolder('${folder}')">Delete</button>
-              </div>
-            </div>
-          `).join('');
-
-          const filesHTML = fileItems.map(file => {
-            const fileName = file.key.split('/').pop();
-            return `
-              <div class="file-item">
-                <div class="file-info">
-                  <div class="file-name">${fileName}</div>
-                  <div class="file-meta">
-                    ${formatBytes(file.size)} • ${new Date(file.lastModified).toLocaleDateString()}
-                  </div>
-                </div>
-                <div class="file-actions">
-                  <button class="btn btn-small" onclick="viewPublicUrl('${file.key}')">View URL</button>
-                  <button class="btn btn-small" onclick="downloadFile('${file.key}')">Download</button>
-                  <button class="btn btn-small btn-danger" onclick="deleteFile('${file.key}')">Delete</button>
-                </div>
-              </div>
-            `;
-          }).join('');
-
-          fileList.innerHTML = folderHTML + filesHTML;
-        }
-      } catch (err) {
-        showStatus('Failed to load files: ' + err.message, 'error');
-      }
-    }
-
-    async function downloadFile(key) {
-      try {
-        const { url } = await fetch('/api/s3', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'download', key }),
-        }).then(r => r.json());
-
-        window.open(url, '_blank');
-      } catch (err) {
-        showStatus('Download failed: ' + err.message, 'error');
-      }
-    }
-
-    async function viewPublicUrl(key) {
-      try {
-        const { url, isPermanent, identifier } = await fetch('/api/s3', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'publicUrl', key }),
-        }).then(r => r.json());
-
-        document.getElementById('publicUrlInput').value = url;
-        
-        // Update modal message based on whether URL is permanent
-        const modalBody = document.querySelector('.modal-body p');
-        if (isPermanent) {
-          modalBody.innerHTML = `
-            This is a <strong style="color: #28a745;">permanent public URL</strong>:<br>
-            <small style="color: #6c757d; font-family: monospace; margin-top: 0.25rem; display: block;">Identifier: ${identifier}</small>
-          `;
-        } else {
-          modalBody.innerHTML = `
-            This URL will be valid for <strong>7 days</strong>:<br>
-            <small style="color: #6c757d; font-family: monospace; margin-top: 0.25rem; display: block;">Identifier: ${identifier}</small>
-          `;
-        }
-        
-        document.getElementById('urlModal').style.display = 'flex';
-      } catch (err) {
-        showStatus('Failed to generate URL: ' + err.message, 'error');
-      }
-    }
-
-    function closeUrlModal() {
-      document.getElementById('urlModal').style.display = 'none';
-    }
-
-    async function copyUrl() {
-      const input = document.getElementById('publicUrlInput');
-      try {
-        await navigator.clipboard.writeText(input.value);
-        showStatus('URL copied to clipboard!', 'success');
-      } catch (err) {
-        // Fallback for older browsers
-        input.select();
-        document.execCommand('copy');
-        showStatus('URL copied to clipboard!', 'success');
-      }
-    }
-
-    function openUrl() {
-      const url = document.getElementById('publicUrlInput').value;
-      window.open(url, '_blank');
-    }
-
-    async function deleteFile(key) {
-      if (!confirm('Are you sure you want to delete this file?')) return;
-
-      try {
-        await fetch('/api/s3', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'delete', key }),
-        });
-
-        showStatus('File deleted successfully', 'success');
-        loadFiles();
-      } catch (err) {
-        showStatus('Delete failed: ' + err.message, 'error');
-      }
-    }
-
-    async function createFolder() {
-      const folderName = prompt('Enter folder name:');
-      if (!folderName) return;
-
-      // Sanitize folder name
-      const sanitized = folderName.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
-      if (!sanitized) {
-        showStatus('Invalid folder name', 'error');
+    imageIdentifierInput?.addEventListener('change', async () => {
+      const identifier = imageIdentifierInput.value;
+      if (!identifier) {
+        imagePreview.innerHTML = 'No image selected';
+        imagePreview.classList.add('empty');
         return;
       }
 
       try {
-        // Create a placeholder file to represent the folder
-        const key = `${currentPath}${sanitized}/.folder`;
-        
-        // Upload empty file to create folder
-        const response = await fetch('/api/s3', {
-          method: 'PUT',
-          headers: { 
-            'Content-Type': 'text/plain',
-            'x-s3-key': key
-          },
-          body: '',
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to create folder');
-        }
-
-        showStatus('Folder created successfully', 'success');
-        loadFiles();
-      } catch (err) {
-        showStatus('Failed to create folder: ' + err.message, 'error');
-      }
-    }
-
-    function navigateToFolder(folderName) {
-      currentPath = `${currentPath}${folderName}/`;
-      loadFiles();
-    }
-
-    function navigateToPath(path) {
-      currentPath = path;
-      loadFiles();
-    }
-
-    function updateBreadcrumb() {
-      if (!currentPath) {
-        breadcrumb.innerHTML = `
-          <span class="breadcrumb-item active">
-            <svg style="width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-            </svg>
-            Root
-          </span>
-        `;
-        return;
-      }
-
-      const parts = currentPath.split('/').filter(p => p);
-      let path = '';
-      
-      const crumbs = [`
-        <span class="breadcrumb-item" onclick="navigateToPath('')">
-          <svg style="width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-          </svg>
-          Root
-        </span>
-      `];
-
-      parts.forEach((part, index) => {
-        path += part + '/';
-        const isLast = index === parts.length - 1;
-        crumbs.push(`<span class="breadcrumb-separator">/</span>`);
-        if (isLast) {
-          crumbs.push(`<span class="breadcrumb-item active">${part}</span>`);
-        } else {
-          const pathCopy = path;
-          crumbs.push(`<span class="breadcrumb-item" onclick="navigateToPath('${pathCopy}')">${part}</span>`);
-        }
-      });
-
-      breadcrumb.innerHTML = crumbs.join('');
-    }
-
-    async function deleteFolder(folderName) {
-      const folderPath = `${currentPath}${folderName}/`;
-      
-      if (!confirm(`Are you sure you want to delete the folder "${folderName}" and all its contents?`)) return;
-
-      try {
-        // List all files in the folder
-        const { files } = await fetch('/api/s3', {
+        // Resolve the identifier to get URL
+        const response = await fetch('/api/storage', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'list', prefix: folderPath }),
-        }).then(r => r.json());
+          body: JSON.stringify({ action: 'resolveUrl', identifier }),
+        });
 
-        // Delete all files in the folder
-        for (const file of files) {
-          await fetch('/api/s3', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'delete', key: file.key }),
-          });
-        }
-
-        showStatus('Folder deleted successfully', 'success');
-        loadFiles();
+        const { url } = await response.json();
+        imagePreview.innerHTML = `<img src="${url}" alt="Preview">`;
+        imagePreview.classList.remove('empty');
       } catch (err) {
-        showStatus('Failed to delete folder: ' + err.message, 'error');
+        imagePreview.innerHTML = `<span style="color: #dc3545;">Failed to load preview</span>`;
+        imagePreview.classList.remove('empty');
       }
-    }
-
-    function showStatus(message, type) {
-      status.innerHTML = `<div class="status ${type}">${message}</div>`;
-      setTimeout(() => status.innerHTML = '', 5000);
-    }
-
-    function formatBytes(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-    }
-
-    loadFiles();
+    });
   </script>
 </body>
 </html>

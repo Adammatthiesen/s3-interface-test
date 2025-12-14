@@ -1,4 +1,4 @@
-import type { ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn, UrlMappingServiceDefinition, UrlMetadata } from "../definitions";
+import type { ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn, UrlMappingServiceDefinition, UrlMetadata } from "../DynamicStorageApi/definitions";
 import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -182,10 +182,10 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
         return this.driver.buildPutEndpoint(async ({ getArrayBuffer, getHeader }) => {
             try {
                 const contentType = getHeader('Content-Type') || 'application/octet-stream';
-                const key = getHeader('x-s3-key');
+                const key = getHeader('x-storage-key');
 
                 if (!key) {
-                    return { data: { error: 'Missing x-s3-key header' }, status: 400 };
+                    return { data: { error: 'Missing x-storage-key header' }, status: 400 };
                 }
 
                 const fileData = await getArrayBuffer();

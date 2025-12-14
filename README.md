@@ -1,10 +1,12 @@
-# s3-interface-test
+# dynamic-storage-interface
 
-<img width="1287" height="620" alt="image" src="https://github.com/user-attachments/assets/7b18feba-b817-4d5f-832e-b67f4eb521ca" />
-<img width="1302" height="1156" alt="image" src="https://github.com/user-attachments/assets/ceb7c85a-ba97-4683-b361-e952a2ed84e4" />
+Reusable Astro components for cloud storage file management. Currently implements S3-compatible storage providers (AWS S3, Backblaze B2, MinIO, etc.).
 
+## Components
 
-Simple Astro project that connects to and allows management of files in a S3 bucket
+- **StorageFileBrowser**: Web component for browsing and selecting files from cloud storage
+- **StorageImage**: Optimized image component with cloud storage integration
+- **StoragePicture**: Responsive picture component with cloud storage support
 
 Notable files:
 - `.env.demo`

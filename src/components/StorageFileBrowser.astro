@@ -1,13 +1,13 @@
 ---
-import './S3FileBrowser.css'
+import './StorageFileBrowser.css'
 /**
- * S3FileBrowser Component (Web Component Wrapper)
+ * StorageFileBrowser Component (Web Component Wrapper)
  * 
- * A reusable file browser modal for selecting files from S3 storage.
+ * A reusable file browser modal for selecting files from cloud storage.
  * Can be triggered by any button and fills the selected file URL into an input.
  * 
  * @example
- * <S3FileBrowser 
+ * <StorageFileBrowser 
  *   triggerId="browse-btn" 
  *   targetInputId="file-url-input"
  *   title="Select Image"
@@ -39,14 +39,15 @@ const {
   fileTypes = [],
   filesOnly = false,
   returnType = 'url',
-  apiEndpoint = '/api/s3'
+  apiEndpoint = '/api/storage'
 } = Astro.props;
 
 // Convert fileTypes array to JSON string for the custom element
 const fileTypesJson = JSON.stringify(fileTypes);
 ---
 
-<s3-file-browser
+<!-- Web Component Instance -->
+<storage-file-browser
   trigger-id={triggerId}
   target-input-id={targetInputId}
   data-title={title}
@@ -54,6 +55,6 @@ const fileTypesJson = JSON.stringify(fileTypes);
   files-only={filesOnly.toString()}
   return-type={returnType}
   api-endpoint={apiEndpoint}
-></s3-file-browser>
+></storage-file-browser>
 
-<script src="./S3FileBrowser.ts"></script>
+<script src="./StorageFileBrowser.ts"></script>

@@ -1,7 +1,7 @@
-import { AstroContextDriver } from './s3-api/infra/astro-context';
-import { InMemoryDatabase } from './s3-api/infra/database';
-import { S3ApiService } from './s3-api/infra/s3-service';
-import { S3UrlMappingService } from './s3-api/infra/s3-url-mapping';
+import { AstroContextDriver } from './DynamicStorageApi/core/astro-context';
+import { InMemoryDatabase } from './DynamicStorageApi/core/database';
+import { UrlMappingService } from './DynamicStorageApi/core/url-mapping';
+import { S3ApiService } from './s3/s3-service';
 
 // Instantiate the Astro context driver
 const astroContextDriver = new AstroContextDriver();
@@ -10,7 +10,7 @@ const astroContextDriver = new AstroContextDriver();
 const database = new InMemoryDatabase();
 
 // Instantiate the URL mapping service
-const urlMappingService = new S3UrlMappingService(database);
+const urlMappingService = new UrlMappingService(database);
 
 // Create the S3 API service with the Astro context driver
 export const s3ApiService = new S3ApiService(astroContextDriver, urlMappingService);

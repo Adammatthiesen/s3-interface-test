@@ -1,24 +1,24 @@
 ---
-import { s3ApiService } from '../lib/s3-api';
+import { s3ApiService } from '../lib/api-core';
 
 /**
- * S3Picture Component
+ * StoragePicture Component
  * 
  * Responsive image component using <picture> element with multiple sources.
- * Automatically resolves S3 URLs using the mapping system.
+ * Automatically resolves storage URLs using the mapping system.
  * 
  * @example
- * <S3Picture 
- *   identifier="s3-file://uploads/photo.jpg"
+ * <StoragePicture 
+ *   identifier="storage-file://uploads/photo.jpg"
  *   alt="My Photo"
  *   sizes="(max-width: 768px) 100vw, 50vw"
  * />
  */
 
 interface Source {
-  /** S3 identifier or key for this source */
+  /** Storage identifier or key for this source */
   identifier?: string;
-  s3Key?: string;
+  storageKey?: string;
   /** Media query for this source */
   media?: string;
   /** Image type (e.g., 'image/webp', 'image/jpeg') */
@@ -26,11 +26,11 @@ interface Source {
 }
 
 interface Props {
-  /** Primary S3 file identifier (fallback image) */
+  /** Primary storage file identifier (fallback image) */
   identifier?: string;
-  /** Direct S3 key (will be converted to identifier) */
-  s3Key?: string;
-  /** Alternative sources for responsive images */
+  /** Direct storage key (fallback) */
+  storageKey?: string;
+  /** Array of alternative image sources */
   sources?: Source[];
   /** Alt text for the image */
   alt: string;
@@ -48,7 +48,7 @@ interface Props {
 
 const { 
   identifier, 
-  s3Key, 
+  storageKey, 
   sources = [],
   alt, 
   class: className = '', 
@@ -58,9 +58,9 @@ const {
   fit = 'cover'
 } = Astro.props;
 
-// Validate that either identifier or s3Key is provided
-if (!identifier && !s3Key) {
-  throw new Error('S3Picture: Either "identifier" or "s3Key" prop is required');
+// Validate that either identifier or storageKey is provided
+if (!identifier && !storageKey) {
+  throw new Error('S3Picture: Either "identifier" or "storageKey" prop is required');
 }
 
 // Helper function to resolve URL
@@ -76,8 +76,8 @@ async function resolveUrl(fileIdentifier: string) {
 
 // Resolve all source URLs
 const resolvedSources = await Promise.all(
-  sources.map(async (source) => {
-    const sourceIdentifier = source.identifier || `s3-file://${source.s3Key}`;
+  sources.map(async (source: Source) => {
+    const sourceIdentifier = source.identifier || `storage-file://${source.storageKey}`;
     const url = await resolveUrl(sourceIdentifier);
     return {
       url,
@@ -88,7 +88,7 @@ const resolvedSources = await Promise.all(
 );
 
 // Resolve primary image URL
-const fileIdentifier = identifier || `s3-file://${s3Key}`;
+const fileIdentifier = identifier || `storage-file://${storageKey}`;
 const imageUrl = await resolveUrl(fileIdentifier);
 
 // Build style object
@@ -100,22 +100,22 @@ const styleAttr = styles.length > 0 ? styles.join('; ') : undefined;
 ---
 
 {imageUrl ? (
-  <picture class={className}>
-    {resolvedSources.map(source => source.url && (
-      <source 
+  <picture>
+    {resolvedSources.map((source: {url: string | null, media?: string, type?: string}) => source.url && (
+      <source
         srcset={source.url}
         media={source.media}
         type={source.type}
       />
     ))}
-    <img 
-      src={imageUrl} 
+    <img
+      src={imageUrl}
       alt={alt}
+      class={className}
       width={width}
       height={height}
       loading={loading}
       style={styleAttr}
-      data-s3-identifier={fileIdentifier}
     />
   </picture>
 ) : (

@@ -1,6 +1,6 @@
-// S3 File Browser Web Component
+// Storage File Browser Web Component
 
-interface S3File {
+interface StorageFile {
     key: string;
     size: number;
     lastModified?: Date;
@@ -10,27 +10,27 @@ interface MimeTypeMap {
     [key: string]: string;
 }
 
-type S3ReturnType = 'url' | 'identifier' | 'key';
+type StorageReturnType = 'url' | 'identifier' | 'key';
 
 /**
- * S3FileBrowser Custom Element
- * A web component for browsing and selecting files from S3 storage
+ * StorageFileBrowser Custom Element
+ * A web component for browsing and selecting files from cloud storage
  */
-class S3FileBrowser extends HTMLElement {
+class StorageFileBrowser extends HTMLElement {
     private currentPath: string = '';
-    private selectedFile: S3File | null = null;
+    private selectedFile: StorageFile | null = null;
     private triggerId!: string;
     private targetInputId!: string;
     private modalTitle!: string;
     private fileTypes!: string[];
     private filesOnly!: boolean;
-    private returnType!: S3ReturnType;
+    private returnType!: StorageReturnType;
     private modalId!: string;
     private contentId!: string;
     private isUploading: boolean = false;
-    private apiEndpoint: string = '/api/s3';
+    private apiEndpoint: string = '/api/storage';
     private pendingFiles: File[] = [];
-    private fileToDelete: S3File | null = null;
+    private fileToDelete: StorageFile | null = null;
 
     constructor() {
         super();
@@ -44,12 +44,12 @@ class S3FileBrowser extends HTMLElement {
         this.fileTypes = fileTypesAttr ? JSON.parse(fileTypesAttr) : [];
 
         this.filesOnly = this.getAttribute('files-only') === 'true';
-        this.returnType = (this.getAttribute('return-type') as S3ReturnType) || 'url';
-        this.apiEndpoint = this.getAttribute('api-endpoint') || '/api/s3';
+        this.returnType = (this.getAttribute('return-type') as StorageReturnType) || 'url';
+        this.apiEndpoint = this.getAttribute('api-endpoint') || '/api/storage';
 
         // Generate unique IDs
-        this.modalId = `s3-browser-${this.triggerId}`;
-        this.contentId = `s3-browser-content-${this.triggerId}`;
+        this.modalId = `storage-browser-${this.triggerId}`;
+        this.contentId = `storage-browser-content-${this.triggerId}`;
 
         // Render the component
         this.render();
@@ -58,30 +58,30 @@ class S3FileBrowser extends HTMLElement {
 
     private render(): void {
         this.innerHTML = `
-      <div id="${this.modalId}" class="s3-browser-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-${this.triggerId}">
-        <div class="s3-browser-overlay" aria-hidden="true"></div>
-        <div class="s3-browser-container">
-          <div class="s3-browser-header">
+      <div id="${this.modalId}" class="storage-browser-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-${this.triggerId}">
+        <div class="storage-browser-overlay" aria-hidden="true"></div>
+        <div class="storage-browser-container">
+          <div class="storage-browser-header">
             <h3 id="modal-title-${this.triggerId}">${this.modalTitle}</h3>
-            <button class="s3-browser-close" data-close-modal="${this.modalId}" aria-label="Close file browser">&times;</button>
+            <button class="storage-browser-close" data-close-modal="${this.modalId}" aria-label="Close file browser">&times;</button>
           </div>
           
-          <div class="s3-browser-toolbar" role="toolbar" aria-label="File browser actions">
-            <nav id="breadcrumb-${this.triggerId}" class="s3-browser-breadcrumb" aria-label="File path breadcrumb"></nav>
-            <div class="s3-browser-toolbar-actions">
-              <button class="s3-browser-btn s3-browser-btn-small" data-upload="${this.triggerId}" aria-label="Upload files">
+          <div class="storage-browser-toolbar" role="toolbar" aria-label="File browser actions">
+            <nav id="breadcrumb-${this.triggerId}" class="storage-browser-breadcrumb" aria-label="File path breadcrumb"></nav>
+            <div class="storage-browser-toolbar-actions">
+              <button class="storage-browser-btn storage-browser-btn-small" data-upload="${this.triggerId}" aria-label="Upload files">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 Upload
               </button>
-              ${!this.filesOnly ? `<button class="s3-browser-btn s3-browser-btn-small" data-create-folder="${this.triggerId}" aria-label="Create new folder">
+              ${!this.filesOnly ? `<button class="storage-browser-btn storage-browser-btn-small" data-create-folder="${this.triggerId}" aria-label="Create new folder">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                 </svg>
                 New Folder
               </button>` : ''}
-              <button class="s3-browser-btn s3-browser-btn-small" data-refresh="${this.triggerId}" aria-label="Refresh file list">
+              <button class="storage-browser-btn storage-browser-btn-small" data-refresh="${this.triggerId}" aria-label="Refresh file list">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
@@ -91,68 +91,68 @@ class S3FileBrowser extends HTMLElement {
             <input type="file" id="upload-input-${this.triggerId}" style="display: none;" multiple aria-label="File upload input" />
           </div>
 
-          <div id="${this.contentId}" class="s3-browser-content" role="region" aria-label="File browser content" aria-live="polite">
-            <div class="s3-browser-loading" role="status" aria-live="polite">Loading files...</div>
+          <div id="${this.contentId}" class="storage-browser-content" role="region" aria-label="File browser content" aria-live="polite">
+            <div class="storage-browser-loading" role="status" aria-live="polite">Loading files...</div>
           </div>
 
-          <div class="s3-browser-footer">
-            <div class="s3-browser-selected" id="selected-${this.triggerId}" role="status" aria-live="polite" aria-atomic="true">
+          <div class="storage-browser-footer">
+            <div class="storage-browser-selected" id="selected-${this.triggerId}" role="status" aria-live="polite" aria-atomic="true">
               No file selected
             </div>
-            <div class="s3-browser-actions">
-              <button class="s3-browser-btn s3-browser-btn-secondary" data-close-modal="${this.modalId}">Cancel</button>
-              <button class="s3-browser-btn s3-browser-btn-primary" id="select-btn-${this.triggerId}" disabled aria-disabled="true">Select</button>
+            <div class="storage-browser-actions">
+              <button class="storage-browser-btn storage-browser-btn-secondary" data-close-modal="${this.modalId}">Cancel</button>
+              <button class="storage-browser-btn storage-browser-btn-primary" id="select-btn-${this.triggerId}" disabled aria-disabled="true">Select</button>
             </div>
           </div>
         </div>
       </div>
 
-      <div id="upload-dialog-${this.triggerId}" class="s3-browser-upload-dialog" role="dialog" aria-modal="true" aria-labelledby="upload-dialog-title-${this.triggerId}" style="display: none;">
-        <div class="s3-browser-overlay" aria-hidden="true"></div>
-        <div class="s3-browser-dialog-container">
-          <div class="s3-browser-dialog-header">
+      <div id="upload-dialog-${this.triggerId}" class="storage-browser-upload-dialog" role="dialog" aria-modal="true" aria-labelledby="upload-dialog-title-${this.triggerId}" style="display: none;">
+        <div class="storage-browser-overlay" aria-hidden="true"></div>
+        <div class="storage-browser-dialog-container">
+          <div class="storage-browser-dialog-header">
             <h3 id="upload-dialog-title-${this.triggerId}">Customize Filenames</h3>
           </div>
-          <div class="s3-browser-dialog-content" id="upload-dialog-content-${this.triggerId}">
+          <div class="storage-browser-dialog-content" id="upload-dialog-content-${this.triggerId}">
           </div>
-          <div class="s3-browser-dialog-footer">
-            <button class="s3-browser-btn s3-browser-btn-secondary" id="upload-dialog-cancel-${this.triggerId}">Cancel</button>
-            <button class="s3-browser-btn s3-browser-btn-primary" id="upload-dialog-confirm-${this.triggerId}">Upload</button>
+          <div class="storage-browser-dialog-footer">
+            <button class="storage-browser-btn storage-browser-btn-secondary" id="upload-dialog-cancel-${this.triggerId}">Cancel</button>
+            <button class="storage-browser-btn storage-browser-btn-primary" id="upload-dialog-confirm-${this.triggerId}">Upload</button>
           </div>
         </div>
       </div>
 
-      <div id="delete-dialog-${this.triggerId}" class="s3-browser-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title-${this.triggerId}" style="display: none;">
-        <div class="s3-browser-overlay" aria-hidden="true"></div>
-        <div class="s3-browser-dialog-container s3-browser-dialog-small">
-          <div class="s3-browser-dialog-header">
+      <div id="delete-dialog-${this.triggerId}" class="storage-browser-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title-${this.triggerId}" style="display: none;">
+        <div class="storage-browser-overlay" aria-hidden="true"></div>
+        <div class="storage-browser-dialog-container storage-browser-dialog-small">
+          <div class="storage-browser-dialog-header">
             <h3 id="delete-dialog-title-${this.triggerId}">Delete File?</h3>
           </div>
-          <div class="s3-browser-dialog-content" id="delete-dialog-content-${this.triggerId}">
+          <div class="storage-browser-dialog-content" id="delete-dialog-content-${this.triggerId}">
             <p>Are you sure you want to delete this file? This action cannot be undone.</p>
-            <p class="s3-browser-delete-filename"></p>
+            <p class="storage-browser-delete-filename"></p>
           </div>
-          <div class="s3-browser-dialog-footer">
-            <button class="s3-browser-btn s3-browser-btn-secondary" id="delete-dialog-cancel-${this.triggerId}">Cancel</button>
-            <button class="s3-browser-btn s3-browser-btn-danger" id="delete-dialog-confirm-${this.triggerId}">Delete</button>
+          <div class="storage-browser-dialog-footer">
+            <button class="storage-browser-btn storage-browser-btn-secondary" id="delete-dialog-cancel-${this.triggerId}">Cancel</button>
+            <button class="storage-browser-btn storage-browser-btn-danger" id="delete-dialog-confirm-${this.triggerId}">Delete</button>
           </div>
         </div>
       </div>
 
       <!-- Create Folder Dialog -->
-      <div id="folder-dialog-${this.triggerId}" class="s3-browser-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="folder-dialog-title-${this.triggerId}">
-        <div class="s3-browser-overlay" aria-hidden="true"></div>
-        <div class="s3-browser-dialog-container s3-browser-dialog-small">
-          <div class="s3-browser-dialog-header">
+      <div id="folder-dialog-${this.triggerId}" class="storage-browser-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="folder-dialog-title-${this.triggerId}">
+        <div class="storage-browser-overlay" aria-hidden="true"></div>
+        <div class="storage-browser-dialog-container storage-browser-dialog-small">
+          <div class="storage-browser-dialog-header">
             <h3 id="folder-dialog-title-${this.triggerId}">Create New Folder</h3>
           </div>
-          <div class="s3-browser-dialog-content" id="folder-dialog-content-${this.triggerId}">
-            <p style="color: var(--s3-browser-text-primary);">Enter a name for the new folder:</p>
-            <input type="text" id="folder-name-input-${this.triggerId}" class="s3-browser-upload-filename" placeholder="Folder name" aria-label="Folder name" />
+          <div class="storage-browser-dialog-content" id="folder-dialog-content-${this.triggerId}">
+            <p style="color: var(--storage-browser-text-primary);">Enter a name for the new folder:</p>
+            <input type="text" id="folder-name-input-${this.triggerId}" class="storage-browser-upload-filename" placeholder="Folder name" aria-label="Folder name" />
           </div>
-          <div class="s3-browser-dialog-footer">
-            <button class="s3-browser-btn s3-browser-btn-secondary" id="folder-dialog-cancel-${this.triggerId}">Cancel</button>
-            <button class="s3-browser-btn s3-browser-btn-primary" id="folder-dialog-confirm-${this.triggerId}">Create</button>
+          <div class="storage-browser-dialog-footer">
+            <button class="storage-browser-btn storage-browser-btn-secondary" id="folder-dialog-cancel-${this.triggerId}">Cancel</button>
+            <button class="storage-browser-btn storage-browser-btn-primary" id="folder-dialog-confirm-${this.triggerId}">Create</button>
           </div>
         </div>
       </div>
@@ -178,7 +178,7 @@ class S3FileBrowser extends HTMLElement {
             this.loadFiles();
             // Focus the close button for accessibility
             setTimeout(() => {
-                const closeBtn = this.querySelector<HTMLButtonElement>('.s3-browser-close');
+                const closeBtn = this.querySelector<HTMLButtonElement>('.storage-browser-close');
                 closeBtn?.focus();
             }, 100);
         });
@@ -204,7 +204,7 @@ class S3FileBrowser extends HTMLElement {
         });
 
         // Close on overlay click
-        this.querySelector('.s3-browser-overlay')?.addEventListener('click', () => {
+        this.querySelector('.storage-browser-overlay')?.addEventListener('click', () => {
             modal.style.display = 'none';
             this.selectedFile = null;
             this.updateSelectedInfo();
@@ -273,7 +273,7 @@ class S3FileBrowser extends HTMLElement {
         content.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            content.classList.add('s3-browser-drag-over');
+            content.classList.add('storage-browser-drag-over');
         });
 
         content.addEventListener('dragleave', (e) => {
@@ -281,14 +281,14 @@ class S3FileBrowser extends HTMLElement {
             e.stopPropagation();
             // Only remove class if we're leaving the content area itself
             if (e.target === content) {
-                content.classList.remove('s3-browser-drag-over');
+                content.classList.remove('storage-browser-drag-over');
             }
         });
 
         content.addEventListener('drop', async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            content.classList.remove('s3-browser-drag-over');
+            content.classList.remove('storage-browser-drag-over');
 
             const files = e.dataTransfer?.files;
             if (files && files.length > 0) {
@@ -312,7 +312,7 @@ class S3FileBrowser extends HTMLElement {
                 const data = await response.json();
                 value = data.url;
             } else if (this.returnType === 'identifier') {
-                value = `s3-file://${this.selectedFile.key}`;
+                value = `storage-file://${this.selectedFile.key}`;
             } else {
                 value = this.selectedFile.key;
             }
@@ -332,7 +332,7 @@ class S3FileBrowser extends HTMLElement {
         const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;
 
-        content.innerHTML = '<div class="s3-browser-loading">Loading files...</div>';
+        content.innerHTML = '<div class="storage-browser-loading">Loading files...</div>';
 
         try {
             const response = await fetch(this.apiEndpoint, {
@@ -341,13 +341,13 @@ class S3FileBrowser extends HTMLElement {
                 body: JSON.stringify({ action: 'list', prefix: this.currentPath }),
             });
             const data = await response.json();
-            const files: S3File[] = data.files;
+            const files: StorageFile[] = data.files;
 
             this.updateBreadcrumb();
 
             // Process files and folders
             const folders = new Set<string>();
-            const fileItems: S3File[] = [];
+            const fileItems: StorageFile[] = [];
 
             files.forEach((file) => {
                 const relativePath = file.key.substring(this.currentPath.length);
@@ -368,7 +368,7 @@ class S3FileBrowser extends HTMLElement {
 
             if (folders.size === 0 && fileItems.length === 0) {
                 content.innerHTML = `
-          <div class="s3-browser-empty" role="status" aria-live="polite">
+          <div class="storage-browser-empty" role="status" aria-live="polite">
             <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
             </svg>
@@ -378,19 +378,19 @@ class S3FileBrowser extends HTMLElement {
                 return;
             }
 
-            let html = '<div class="s3-browser-grid" role="grid" aria-label="Files and folders">';
+            let html = '<div class="storage-browser-grid" role="grid" aria-label="Files and folders">';
 
             // Add folders (unless filesOnly is true)
             if (!this.filesOnly) {
                 folders.forEach((folder) => {
                     html += `
-            <div class="s3-browser-item s3-browser-folder" data-folder="${folder}" role="gridcell" tabindex="0" aria-label="Folder: ${folder}">
-              <div class="s3-browser-icon" aria-hidden="true">
+            <div class="storage-browser-item storage-browser-folder" data-folder="${folder}" role="gridcell" tabindex="0" aria-label="Folder: ${folder}">
+              <div class="storage-browser-icon" aria-hidden="true">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
                 </svg>
               </div>
-              <div class="s3-browser-name">${folder}</div>
+              <div class="storage-browser-name">${folder}</div>
             </div>
           `;
                 });
@@ -404,17 +404,17 @@ class S3FileBrowser extends HTMLElement {
                 const fileSize = this.formatBytes(file.size);
 
                 html += `
-          <div class="s3-browser-item s3-browser-file" data-file='${JSON.stringify(file)}' role="gridcell" tabindex="0" aria-label="File: ${displayName}, Size: ${fileSize}">
-            <button class="s3-browser-delete-btn" data-delete-file='${JSON.stringify(file)}' aria-label="Delete ${displayName}" title="Delete file">
+          <div class="storage-browser-item storage-browser-file" data-file='${JSON.stringify(file)}' role="gridcell" tabindex="0" aria-label="File: ${displayName}, Size: ${fileSize}">
+            <button class="storage-browser-delete-btn" data-delete-file='${JSON.stringify(file)}' aria-label="Delete ${displayName}" title="Delete file">
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
-            <div class="s3-browser-icon" aria-hidden="true">
+            <div class="storage-browser-icon" aria-hidden="true">
               ${this.getFileIcon(fileExt)}
             </div>
-            <div class="s3-browser-name">${displayName}</div>
-            <div class="s3-browser-size">${fileSize}</div>
+            <div class="storage-browser-name">${displayName}</div>
+            <div class="storage-browser-size">${fileSize}</div>
           </div>
         `;
             });
@@ -441,7 +441,7 @@ class S3FileBrowser extends HTMLElement {
             // Add click handlers for files
             content.querySelectorAll<HTMLDivElement>('[data-file]').forEach((el) => {
                 const handleFileSelection = () => {
-                    content.querySelectorAll('.s3-browser-file').forEach((f) => {
+                    content.querySelectorAll('.storage-browser-file').forEach((f) => {
                         f.classList.remove('selected');
                         f.setAttribute('aria-selected', 'false');
                     });
@@ -450,7 +450,7 @@ class S3FileBrowser extends HTMLElement {
 
                     const fileData = el.getAttribute('data-file');
                     if (fileData) {
-                        const file: S3File = JSON.parse(fileData);
+                        const file: StorageFile = JSON.parse(fileData);
                         this.selectedFile = file;
                         this.updateSelectedInfo();
                     }
@@ -471,14 +471,14 @@ class S3FileBrowser extends HTMLElement {
                     e.stopPropagation(); // Prevent file selection
                     const fileData = btn.getAttribute('data-delete-file');
                     if (fileData) {
-                        const file: S3File = JSON.parse(fileData);
+                        const file: StorageFile = JSON.parse(fileData);
                         this.showDeleteConfirmation(file);
                     }
                 });
             });
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-            content.innerHTML = `<div class="s3-browser-error" role="alert" aria-live="assertive">Failed to load files: ${errorMessage}</div>`;
+            content.innerHTML = `<div class="storage-browser-error" role="alert" aria-live="assertive">Failed to load files: ${errorMessage}</div>`;
         }
     }
 
@@ -502,7 +502,7 @@ class S3FileBrowser extends HTMLElement {
 
         if (!this.currentPath) {
             breadcrumb.innerHTML = `
-        <span class="s3-browser-crumb active">
+        <span class="storage-browser-crumb active">
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
           </svg>
@@ -517,7 +517,7 @@ class S3FileBrowser extends HTMLElement {
 
         const crumbs: string[] = [
             `
-      <span class="s3-browser-crumb" data-path="">
+      <span class="storage-browser-crumb" data-path="">
         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
         </svg>
@@ -529,11 +529,11 @@ class S3FileBrowser extends HTMLElement {
         parts.forEach((part, index) => {
             path += part + '/';
             const isLast = index === parts.length - 1;
-            crumbs.push(`<span class="s3-browser-separator">/</span>`);
+            crumbs.push(`<span class="storage-browser-separator">/</span>`);
             if (isLast) {
-                crumbs.push(`<span class="s3-browser-crumb active">${part}</span>`);
+                crumbs.push(`<span class="storage-browser-crumb active">${part}</span>`);
             } else {
-                crumbs.push(`<span class="s3-browser-crumb" data-path="${path}">${part}</span>`);
+                crumbs.push(`<span class="storage-browser-crumb" data-path="${path}">${part}</span>`);
             }
         });
 
@@ -710,20 +710,20 @@ class S3FileBrowser extends HTMLElement {
         if (!dialog || !dialogContent) return;
 
         // Build file list with input fields
-        let html = '<div class="s3-browser-upload-files">';
+        let html = '<div class="storage-browser-upload-files">';
         this.pendingFiles.forEach((file, index) => {
             const timestamp = Date.now();
             const defaultName = `${timestamp}-${file.name}`;
             html += `
-                <div class="s3-browser-upload-file-item">
+                <div class="storage-browser-upload-file-item">
                     <label for="upload-name-${this.triggerId}-${index}">
                         <strong>Original:</strong> ${file.name}
-                        <span class="s3-browser-file-size">(${this.formatBytes(file.size)})</span>
+                        <span class="storage-browser-file-size">(${this.formatBytes(file.size)})</span>
                     </label>
                     <input 
                         type="text" 
                         id="upload-name-${this.triggerId}-${index}" 
-                        class="s3-browser-filename-input" 
+                        class="storage-browser-filename-input" 
                         value="${defaultName}"
                         data-file-index="${index}"
                         aria-label="Filename for ${file.name}"
@@ -751,12 +751,12 @@ class S3FileBrowser extends HTMLElement {
         };
 
         cancelBtn?.addEventListener('click', handleCancel, { once: true });
-        dialog.querySelector('.s3-browser-overlay')?.addEventListener('click', handleCancel, { once: true });
+        dialog.querySelector('.storage-browser-overlay')?.addEventListener('click', handleCancel, { once: true });
 
         // Confirm handler
         confirmBtn?.addEventListener('click', async () => {
             const customNames: { [key: number]: string } = {};
-            dialogContent.querySelectorAll<HTMLInputElement>('.s3-browser-filename-input').forEach((input) => {
+            dialogContent.querySelectorAll<HTMLInputElement>('.storage-browser-filename-input').forEach((input) => {
                 const index = parseInt(input.dataset.fileIndex || '0');
                 customNames[index] = input.value;
             });
@@ -776,10 +776,10 @@ class S3FileBrowser extends HTMLElement {
         document.addEventListener('keydown', handleEscape);
     }
 
-    private showDeleteConfirmation(file: S3File): void {
+    private showDeleteConfirmation(file: StorageFile): void {
         this.fileToDelete = file;
         const dialog = this.querySelector<HTMLDivElement>(`#delete-dialog-${this.triggerId}`);
-        const filenameEl = dialog?.querySelector<HTMLParagraphElement>('.s3-browser-delete-filename');
+        const filenameEl = dialog?.querySelector<HTMLParagraphElement>('.storage-browser-delete-filename');
         const cancelBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-cancel-${this.triggerId}`);
         const confirmBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-confirm-${this.triggerId}`);
 
@@ -802,7 +802,7 @@ class S3FileBrowser extends HTMLElement {
         };
 
         cancelBtn?.addEventListener('click', handleCancel, { once: true });
-        dialog.querySelector('.s3-browser-overlay')?.addEventListener('click', handleCancel, { once: true });
+        dialog.querySelector('.storage-browser-overlay')?.addEventListener('click', handleCancel, { once: true });
 
         // Confirm handler
         confirmBtn?.addEventListener('click', async () => {
@@ -823,11 +823,11 @@ class S3FileBrowser extends HTMLElement {
         document.addEventListener('keydown', handleEscape);
     }
 
-    private async deleteFile(file: S3File): Promise<void> {
+    private async deleteFile(file: StorageFile): Promise<void> {
         const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;
 
-        content.innerHTML = '<div class="s3-browser-loading" role="status">Deleting file...</div>';
+        content.innerHTML = '<div class="storage-browser-loading" role="status">Deleting file...</div>';
 
         try {
             const response = await fetch(this.apiEndpoint, {
@@ -845,7 +845,7 @@ class S3FileBrowser extends HTMLElement {
         } catch (error) {
             console.error('Delete error:', error);
             content.innerHTML = `
-                <div class="s3-browser-error" role="alert">
+                <div class="storage-browser-error" role="alert">
                     <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -872,7 +872,7 @@ class S3FileBrowser extends HTMLElement {
         const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;
 
-        content.innerHTML = '<div class="s3-browser-loading" role="status">Creating folder...</div>';
+        content.innerHTML = '<div class="storage-browser-loading" role="status">Creating folder...</div>';
 
         try {
             // Sanitize folder name
@@ -898,7 +898,7 @@ class S3FileBrowser extends HTMLElement {
         } catch (error) {
             console.error('Create folder error:', error);
             content.innerHTML = `
-                <div class="s3-browser-error" role="alert">
+                <div class="storage-browser-error" role="alert">
                     <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -921,20 +921,20 @@ class S3FileBrowser extends HTMLElement {
         let completedFiles = 0;
 
         content.innerHTML = `
-            <div class="s3-browser-uploading" role="status" aria-live="polite">
+            <div class="storage-browser-uploading" role="status" aria-live="polite">
                 <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 <p>Uploading files...</p>
-                <div class="s3-browser-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${totalFiles}" aria-valuenow="0" aria-label="Upload progress">
-                    <div class="s3-browser-progress-bar" style="width: 0%"></div>
+                <div class="storage-browser-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${totalFiles}" aria-valuenow="0" aria-label="Upload progress">
+                    <div class="storage-browser-progress-bar" style="width: 0%"></div>
                 </div>
-                <p class="s3-browser-progress-text" aria-live="polite">0 / ${totalFiles} files uploaded</p>
+                <p class="storage-browser-progress-text" aria-live="polite">0 / ${totalFiles} files uploaded</p>
             </div>
         `;
 
-        const progressBar = content.querySelector<HTMLDivElement>('.s3-browser-progress-bar');
-        const progressText = content.querySelector<HTMLParagraphElement>('.s3-browser-progress-text');
+        const progressBar = content.querySelector<HTMLDivElement>('.storage-browser-progress-bar');
+        const progressText = content.querySelector<HTMLParagraphElement>('.storage-browser-progress-text');
 
         try {
             for (let i = 0; i < this.pendingFiles.length; i++) {
@@ -957,7 +957,7 @@ class S3FileBrowser extends HTMLElement {
         } catch (error) {
             console.error('Upload error:', error);
             content.innerHTML = `
-                <div class="s3-browser-error" role="alert" aria-live="assertive">
+                <div class="storage-browser-error" role="alert" aria-live="assertive">
                     <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -979,7 +979,7 @@ class S3FileBrowser extends HTMLElement {
             method: 'PUT',
             headers: {
                 'Content-Type': file.type || 'application/octet-stream',
-                'x-s3-key': key,
+                'x-storage-key': key,
             },
             body: file,
         });
@@ -992,4 +992,4 @@ class S3FileBrowser extends HTMLElement {
 }
 
 // Register the custom element
-customElements.define('s3-file-browser', S3FileBrowser);
+customElements.define('storage-file-browser', StorageFileBrowser);

@@ -1,7 +1,7 @@
 // URL Mapping Service - handles resolution and auto-refresh of URLs
 import type { UrlMetadata, UrlMapping, UrlMappingServiceDefinition, UrlMappingDatabaseDefinition } from '../definitions';
 
-export class S3UrlMappingService implements UrlMappingServiceDefinition<UrlMetadata> {
+export class UrlMappingService implements UrlMappingServiceDefinition<UrlMetadata> {
   database;
 
   constructor(database: UrlMappingDatabaseDefinition) {
@@ -9,7 +9,7 @@ export class S3UrlMappingService implements UrlMappingServiceDefinition<UrlMetad
   }
 
   /**
-   * Resolve a URL from an identifier (e.g., "s3-file://path/to/file.jpg")
+   * Resolve a URL from an identifier (e.g., "storage-file://path/to/file.jpg")
    * Automatically refreshes expired URLs
    */
   async resolve(
@@ -87,22 +87,22 @@ export class S3UrlMappingService implements UrlMappingServiceDefinition<UrlMetad
   }
 
   /**
-   * Extract S3 key from identifier
-   * e.g., "s3-file://path/to/file.jpg" -> "path/to/file.jpg"
+   * Extract storage key from identifier
+   * e.g., "storage-file://path/to/file.jpg" -> "path/to/file.jpg"
    */
   private extractKeyFromIdentifier(identifier: string): string {
-    if (identifier.startsWith('s3-file://')) {
-      return identifier.substring('s3-file://'.length);
+    if (identifier.startsWith('storage-file://')) {
+      return identifier.substring('storage-file://'.length);
     }
     // Fallback: treat as direct key
     return identifier;
   }
 
   /**
-   * Create identifier from S3 key
-   * e.g., "path/to/file.jpg" -> "s3-file://path/to/file.jpg"
+   * Create identifier from storage key
+   * e.g., "path/to/file.jpg" -> "storage-file://path/to/file.jpg"
    */
   createIdentifier(s3Key: string): string {
-    return `s3-file://${s3Key}`;
+    return `storage-file://${s3Key}`;
   }
 }
