@@ -1,5 +1,6 @@
 ---
 import StorageFileBrowser from '../components/StorageFileBrowser.astro';
+import StorageImage from '../components/StorageImage.astro'
 import '../styles.css';
 ---
 
@@ -107,6 +108,10 @@ import '../styles.css';
     <div class="demo-section">
       <h2>StorageFileBrowser File Browser Component Demo</h2>
       <p style="color: #6c757d;">Click the "Browse" buttons to open the file browser and select files from your storage.</p>
+    </div>
+
+    <div class="demo-section">
+      <StorageImage identifier="storage-file://uploads/1765388443236-example2.png" alt='example2' />
     </div>
 
     <!-- Example 1: Select any file (URL) -->
