@@ -31,6 +31,7 @@ class StorageFileBrowser extends HTMLElement {
     private apiEndpoint: string = '/api/storage';
     private pendingFiles: File[] = [];
     private fileToDelete: StorageFile | null = null;
+    private connectionEstablished: boolean = false;
 
     constructor() {
         super();
@@ -173,9 +174,26 @@ class StorageFileBrowser extends HTMLElement {
         if (!modal || !content || !selectedInfo || !selectBtn) return;
 
         // Open modal
-        trigger?.addEventListener('click', () => {
+        trigger?.addEventListener('click', async () => {
             modal.style.display = 'flex';
-            this.loadFiles();
+
+            // Test connection first
+            const connected = await this.testConnection();
+            if (!connected) {
+                // Disable action buttons if connection fails
+                if (uploadBtn) uploadBtn.disabled = true;
+                if (refreshBtn) refreshBtn.disabled = true;
+                const createFolderBtn = this.querySelector<HTMLButtonElement>(`[data-create-folder="${this.triggerId}"]`);
+                if (createFolderBtn) createFolderBtn.disabled = true;
+            } else {
+                // Enable buttons if connection succeeds
+                if (uploadBtn) uploadBtn.disabled = false;
+                if (refreshBtn) refreshBtn.disabled = false;
+                const createFolderBtn = this.querySelector<HTMLButtonElement>(`[data-create-folder="${this.triggerId}"]`);
+                if (createFolderBtn) createFolderBtn.disabled = false;
+                this.loadFiles();
+            }
+
             // Focus the close button for accessibility
             setTimeout(() => {
                 const closeBtn = this.querySelector<HTMLButtonElement>('.storage-browser-close');
@@ -326,6 +344,55 @@ class StorageFileBrowser extends HTMLElement {
             this.selectedFile = null;
             this.updateSelectedInfo();
         });
+    }
+
+    private async testConnection(): Promise<boolean> {
+        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        if (!content) return false;
+
+        content.innerHTML = '<div class="storage-browser-loading" role="status">Testing connection...</div>';
+
+        try {
+            const response = await fetch(this.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'test' }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Connection test failed');
+            }
+
+            const data = await response.json();
+            this.connectionEstablished = data.success === true;
+
+            if (!this.connectionEstablished) {
+                content.innerHTML = `
+                    <div class="storage-browser-error" role="alert">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p>Failed to establish connection to storage</p>
+                        <p style="font-size: 0.875rem; opacity: 0.7;">Please check your storage configuration</p>
+                    </div>
+                `;
+            }
+
+            return this.connectionEstablished;
+        } catch (error) {
+            console.error('Storage connection test failed:', error);
+            this.connectionEstablished = false;
+            content.innerHTML = `
+                <div class="storage-browser-error" role="alert">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>Failed to establish connection to storage</p>
+                    <p style="font-size: 0.875rem; opacity: 0.7;">${error instanceof Error ? error.message : 'Unknown error'}</p>
+                </div>
+            `;
+            return false;
+        }
     }
 
     private async loadFiles(): Promise<void> {
