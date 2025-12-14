@@ -1,6 +1,4 @@
 ---
-import { s3ApiService } from '../lib/api-core';
-
 /**
  * StoragePicture Component
  * 
@@ -44,6 +42,8 @@ interface Props {
   loading?: 'lazy' | 'eager';
   /** Object fit */
   fit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  /** API endpoint for S3 operations */
+  apiEndpoint?: string;
 }
 
 const { 
@@ -55,21 +55,32 @@ const {
   width, 
   height,
   loading = 'lazy',
-  fit = 'cover'
+  fit = 'cover',
+  apiEndpoint = '/api/storage'
 } = Astro.props;
 
 // Validate that either identifier or storageKey is provided
 if (!identifier && !storageKey) {
-  throw new Error('S3Picture: Either "identifier" or "storageKey" prop is required');
+  throw new Error('StoragePicture: Either "identifier" or "storageKey" prop is required');
 }
 
 // Helper function to resolve URL
 async function resolveUrl(fileIdentifier: string) {
   try {
-    const data = await s3ApiService.resolveUrl(fileIdentifier);
+    const response = await fetch(new URL(apiEndpoint, Astro.request.url), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'resolveUrl', identifier: fileIdentifier }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to resolve URL: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
     return data.url;
   } catch (err) {
-    console.error('S3Picture: Failed to resolve URL', { identifier: fileIdentifier, error: err });
+    console.error('StoragePicture: Failed to resolve URL', { identifier: fileIdentifier, error: err });
     return null;
   }
 }
