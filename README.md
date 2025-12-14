@@ -1,5 +1,7 @@
 # dynamic-storage-interface
 
+<img alt="example" src="./example.png" />
+
 Reusable Astro components for cloud storage file management. Currently implements S3-compatible storage providers (AWS S3, Backblaze B2, MinIO, etc.).
 
 ## Components
