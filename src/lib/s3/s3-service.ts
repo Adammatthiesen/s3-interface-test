@@ -1,5 +1,5 @@
 import type { ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn, UrlMappingServiceDefinition, UrlMetadata } from "../DynamicStorageApi/definitions";
-import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Flexible configuration for any S3-compatible provider
@@ -58,7 +58,7 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
 
     getPOST(): StorageAPIEndpointFn<C, R> {
         return this.driver.buildPostEndpoint(async ({ getJson }) => {
-            const { action, key, contentType, prefix, identifier } = await getJson();
+            const { action, key, contentType, prefix, identifier, newKey } = await getJson();
 
             switch (action) {
                 case 'resolveUrl': {
@@ -121,6 +121,38 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
                     await this.urlMappingService.delete(mappingIdentifier);
 
                     return { data: { success: true }, status: 200 };
+                }
+
+                case 'rename': {
+                    if (!newKey) {
+                        return { data: { error: 'newKey is required for rename action' }, status: 400 };
+                    }
+
+                    // Copy the object to the new key
+                    const copyCommand = new CopyObjectCommand({
+                        Bucket: BUCKET_NAME,
+                        CopySource: `${BUCKET_NAME}/${key}`,
+                        Key: newKey,
+                    });
+                    await s3Client.send(copyCommand);
+
+                    // Delete the old object
+                    const deleteCommand = new DeleteObjectCommand({
+                        Bucket: BUCKET_NAME,
+                        Key: key,
+                    });
+                    await s3Client.send(deleteCommand);
+
+                    // Update URL mappings
+                    const oldMappingIdentifier = this.urlMappingService.createIdentifier(key);
+                    await this.urlMappingService.delete(oldMappingIdentifier);
+
+                    // Create new mapping for the renamed file
+                    const newMappingIdentifier = this.urlMappingService.createIdentifier(newKey);
+                    const urlMetadata = await generateUrlMetadata(newKey);
+                    await this.urlMappingService.register(newMappingIdentifier, urlMetadata);
+
+                    return { data: { success: true, newKey }, status: 200 };
                 }
 
                 case 'download': {

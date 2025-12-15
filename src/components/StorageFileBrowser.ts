@@ -31,6 +31,7 @@ class StorageFileBrowser extends HTMLElement {
     private apiEndpoint: string = '/api/storage';
     private pendingFiles: File[] = [];
     private fileToDelete: StorageFile | null = null;
+    private fileToRename: StorageFile | null = null;
     private connectionEstablished: boolean = false;
 
     constructor() {
@@ -154,6 +155,53 @@ class StorageFileBrowser extends HTMLElement {
           <div class="storage-browser-dialog-footer">
             <button class="storage-browser-btn storage-browser-btn-secondary" id="folder-dialog-cancel-${this.triggerId}">Cancel</button>
             <button class="storage-browser-btn storage-browser-btn-primary" id="folder-dialog-confirm-${this.triggerId}">Create</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rename Dialog -->
+      <div id="rename-dialog-${this.triggerId}" class="storage-browser-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="rename-dialog-title-${this.triggerId}">
+        <div class="storage-browser-overlay" aria-hidden="true"></div>
+        <div class="storage-browser-dialog-container storage-browser-dialog-small">
+          <div class="storage-browser-dialog-header">
+            <h3 id="rename-dialog-title-${this.triggerId}">Rename File</h3>
+          </div>
+          <div class="storage-browser-dialog-content" id="rename-dialog-content-${this.triggerId}">
+            <p style="color: var(--storage-browser-text-primary);">Enter a new name for the file:</p>
+            <p class="storage-browser-delete-filename" id="rename-current-name-${this.triggerId}"></p>
+            <input type="text" id="rename-input-${this.triggerId}" class="storage-browser-upload-filename" placeholder="New filename" aria-label="New filename" />
+          </div>
+          <div class="storage-browser-dialog-footer">
+            <button class="storage-browser-btn storage-browser-btn-secondary" id="rename-cancel-btn-${this.triggerId}">Cancel</button>
+            <button class="storage-browser-btn storage-browser-btn-primary" id="rename-confirm-btn-${this.triggerId}">Rename</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Dialog -->
+      <div id="preview-dialog-${this.triggerId}" class="storage-browser-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="preview-dialog-title-${this.triggerId}" style="display: none;">
+        <div class="storage-browser-overlay" aria-hidden="true"></div>
+        <div class="storage-browser-dialog-container storage-browser-preview-dialog">
+          <div class="storage-browser-dialog-header storage-browser-preview-header">
+            <h3 id="preview-dialog-title-${this.triggerId}">File Preview</h3>
+            <div class="storage-browser-preview-actions">
+              <a id="preview-download-btn-${this.triggerId}" class="storage-browser-preview-download" download aria-label="Download file" title="Download">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </a>
+              <button class="storage-browser-preview-close" id="preview-close-btn-${this.triggerId}" aria-label="Close preview" title="Close">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="storage-browser-dialog-content storage-browser-preview-content" id="preview-content-${this.triggerId}">
+            <div class="storage-browser-preview-loading" id="preview-loading-${this.triggerId}">
+              <div class="storage-browser-spinner"></div>
+              <p>Loading preview...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -452,6 +500,18 @@ class StorageFileBrowser extends HTMLElement {
                 folders.forEach((folder) => {
                     html += `
             <div class="storage-browser-item storage-browser-folder" data-folder="${folder}" role="gridcell" tabindex="0" aria-label="Folder: ${folder}">
+              <div class="storage-browser-file-actions">
+                <button class="storage-browser-rename-btn" data-rename-folder="${folder}" aria-label="Rename ${folder}" title="Rename">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button class="storage-browser-delete-btn" data-delete-folder="${folder}" aria-label="Delete ${folder}" title="Delete">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
               <div class="storage-browser-icon" aria-hidden="true">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
@@ -469,14 +529,28 @@ class StorageFileBrowser extends HTMLElement {
                 const displayName = this.formatFileName(fileName);
                 const fileExt = fileName?.split('.').pop()?.toLowerCase();
                 const fileSize = this.formatBytes(file.size);
+                const isPreviewable = this.isFilePreviewable(fileExt);
 
                 html += `
           <div class="storage-browser-item storage-browser-file" data-file='${JSON.stringify(file)}' role="gridcell" tabindex="0" aria-label="File: ${displayName}, Size: ${fileSize}">
-            <button class="storage-browser-delete-btn" data-delete-file='${JSON.stringify(file)}' aria-label="Delete ${displayName}" title="Delete file">
-              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+            <div class="storage-browser-file-actions">
+              ${isPreviewable ? `<button class="storage-browser-preview-btn" data-preview-file='${JSON.stringify(file)}' aria-label="Preview ${displayName}" title="Preview">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>` : ''}
+              <button class="storage-browser-rename-btn" data-rename-file='${JSON.stringify(file)}' aria-label="Rename ${displayName}" title="Rename">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button class="storage-browser-delete-btn" data-delete-file='${JSON.stringify(file)}' aria-label="Delete ${displayName}" title="Delete">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
             <div class="storage-browser-icon" aria-hidden="true">
               ${this.getFileIcon(fileExt)}
             </div>
@@ -491,7 +565,11 @@ class StorageFileBrowser extends HTMLElement {
 
             // Add click handlers for folders
             content.querySelectorAll<HTMLDivElement>('[data-folder]').forEach((el) => {
-                const handleFolderActivation = () => {
+                const handleFolderActivation = (e: Event) => {
+                    // Don't navigate if clicking on a button
+                    const target = e.target as HTMLElement;
+                    if (target.closest('button')) return;
+
                     const folder = el.getAttribute('data-folder');
                     if (folder) this.navigateToFolder(folder);
                 };
@@ -500,7 +578,7 @@ class StorageFileBrowser extends HTMLElement {
                 el.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        handleFolderActivation();
+                        handleFolderActivation(e);
                     }
                 });
             });
@@ -540,6 +618,50 @@ class StorageFileBrowser extends HTMLElement {
                     if (fileData) {
                         const file: StorageFile = JSON.parse(fileData);
                         this.showDeleteConfirmation(file);
+                    }
+                });
+            });
+
+            // Add rename button handlers
+            content.querySelectorAll<HTMLButtonElement>('[data-rename-file]').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent file selection
+                    const fileData = btn.getAttribute('data-rename-file');
+                    if (fileData) {
+                        const file: StorageFile = JSON.parse(fileData);
+                        this.showRenameDialog(file);
+                    }
+                });
+            });
+
+            // Add folder rename button handlers
+            content.querySelectorAll<HTMLButtonElement>('[data-rename-folder]').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const folderName = btn.getAttribute('data-rename-folder');
+                    if (folderName) this.showRenameFolderDialog(folderName);
+                });
+            });
+
+            // Add folder delete button handlers
+            content.querySelectorAll<HTMLButtonElement>('[data-delete-folder]').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const folderName = btn.getAttribute('data-delete-folder');
+                    if (folderName) {
+                        this.showDeleteFolderConfirmation(folderName);
+                    }
+                });
+            });
+
+            // Add preview button handlers
+            content.querySelectorAll<HTMLButtonElement>('[data-preview-file]').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent file selection
+                    const fileData = btn.getAttribute('data-preview-file');
+                    if (fileData) {
+                        const file: StorageFile = JSON.parse(fileData);
+                        this.showPreview(file);
                     }
                 });
             });
@@ -843,6 +965,46 @@ class StorageFileBrowser extends HTMLElement {
         document.addEventListener('keydown', handleEscape);
     }
 
+    private showDeleteFolderConfirmation(folderName: string): void {
+        const dialog = this.querySelector<HTMLDivElement>(`#delete-dialog-${this.triggerId}`);
+        const filenameEl = dialog?.querySelector<HTMLParagraphElement>('.storage-browser-delete-filename');
+        const cancelBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-cancel-${this.triggerId}`);
+        const confirmBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-confirm-${this.triggerId}`);
+
+        if (!dialog || !filenameEl) return;
+
+        filenameEl.textContent = `${folderName}/ (and all its contents)`;
+
+        // Show dialog
+        dialog.style.display = 'flex';
+
+        // Focus cancel button
+        setTimeout(() => cancelBtn?.focus(), 100);
+
+        // Cancel handler
+        const handleCancel = () => {
+            dialog.style.display = 'none';
+        };
+
+        cancelBtn?.addEventListener('click', handleCancel, { once: true });
+        dialog.querySelector('.storage-browser-overlay')?.addEventListener('click', handleCancel, { once: true });
+
+        // Confirm handler
+        confirmBtn?.addEventListener('click', async () => {
+            dialog.style.display = 'none';
+            await this.deleteFolder(folderName);
+        }, { once: true });
+
+        // Escape key handler
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && dialog.style.display === 'flex') {
+                handleCancel();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+
     private showDeleteConfirmation(file: StorageFile): void {
         this.fileToDelete = file;
         const dialog = this.querySelector<HTMLDivElement>(`#delete-dialog-${this.triggerId}`);
@@ -918,6 +1080,130 @@ class StorageFileBrowser extends HTMLElement {
                     </svg>
                     <p>Failed to delete file</p>
                     <p style="font-size: 0.875rem; opacity: 0.7;">${error instanceof Error ? error.message : 'Unknown error'}</p>
+                </div>
+            `;
+            setTimeout(() => this.loadFiles(), 2000);
+        }
+    }
+
+    private async renameFolder(oldName: string, newName: string): Promise<void> {
+        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        if (!content) return;
+
+        content.innerHTML = `
+            <div class="storage-browser-loading" role="status" aria-live="polite">
+                <div class="storage-browser-spinner" aria-hidden="true"></div>
+                <p>Renaming folder...</p>
+            </div>
+        `;
+
+        try {
+            // Sanitize new folder name
+            const sanitized = newName.replace(/[^a-zA-Z0-9-_]/g, '-');
+            const oldPrefix = this.currentPath + oldName + '/';
+            const newPrefix = this.currentPath + sanitized + '/';
+
+            // Get all files in the folder
+            const response = await fetch(this.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'list', prefix: oldPrefix }),
+            });
+
+            if (!response.ok) throw new Error('Failed to list folder contents');
+
+            const result = await response.json();
+
+            // Check both possible response structures
+            const files = result.files || result.data?.files || [];
+
+            // Rename each file in the folder
+            for (const file of files) {
+                const relativePath = file.key.substring(oldPrefix.length);
+                const newKey = newPrefix + relativePath;
+
+                const renameResponse = await fetch(this.apiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'rename',
+                        key: file.key,
+                        newKey: newKey
+                    }),
+                });
+
+                if (!renameResponse.ok) {
+                    const error = await renameResponse.json();
+                    console.error('Failed to rename file:', file.key, error);
+                }
+            }
+
+            await this.loadFiles();
+        } catch (error) {
+            console.error('Rename folder error:', error);
+            content.innerHTML = `
+                <div class="storage-browser-error" role="alert">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>Failed to rename folder</p>
+                </div>
+            `;
+            setTimeout(() => this.loadFiles(), 2000);
+        }
+    }
+
+    private async deleteFolder(folderName: string): Promise<void> {
+        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        if (!content) return;
+
+        content.innerHTML = `
+            <div class="storage-browser-loading" role="status" aria-live="polite">
+                <div class="storage-browser-spinner" aria-hidden="true"></div>
+                <p>Deleting folder...</p>
+            </div>
+        `;
+
+        try {
+            const prefix = this.currentPath + folderName + '/';
+
+            // Get all files in the folder
+            const response = await fetch(this.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'list', prefix: prefix }),
+            });
+
+            if (!response.ok) throw new Error('Failed to list folder contents');
+
+            const result = await response.json();
+
+            // Check both possible response structures
+            const files = result.files || result.data?.files || [];
+
+            // Delete each file in the folder
+            for (const file of files) {
+                const deleteResponse = await fetch(this.apiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', key: file.key }),
+                });
+
+                if (!deleteResponse.ok) {
+                    const error = await deleteResponse.json();
+                    console.error('Failed to delete file:', file.key, error);
+                }
+            }
+
+            await this.loadFiles();
+        } catch (error) {
+            console.error('Delete folder error:', error);
+            content.innerHTML = `
+                <div class="storage-browser-error" role="alert">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>Failed to delete folder</p>
                 </div>
             `;
             setTimeout(() => this.loadFiles(), 2000);
@@ -1054,6 +1340,334 @@ class StorageFileBrowser extends HTMLElement {
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.error || 'Upload failed');
+        }
+    }
+
+    private showRenameFolderDialog(folderName: string): void {
+        const dialog = this.querySelector<HTMLDivElement>(`#rename-dialog-${this.triggerId}`);
+        const fileNameDisplay = this.querySelector<HTMLSpanElement>(`#rename-current-name-${this.triggerId}`);
+        const input = this.querySelector<HTMLInputElement>(`#rename-input-${this.triggerId}`);
+        const confirmBtn = this.querySelector<HTMLButtonElement>(`#rename-confirm-btn-${this.triggerId}`);
+        const cancelBtn = this.querySelector<HTMLButtonElement>(`#rename-cancel-btn-${this.triggerId}`);
+
+        if (!dialog || !fileNameDisplay || !input || !confirmBtn || !cancelBtn) return;
+
+        // Display current folder name
+        fileNameDisplay.textContent = folderName;
+        input.value = folderName;
+
+        // Show dialog
+        dialog.style.display = 'flex';
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 100);
+
+        // Remove any existing event listeners by cloning and replacing the buttons
+        const newCancelBtn = cancelBtn.cloneNode(true) as HTMLButtonElement;
+        const newConfirmBtn = confirmBtn.cloneNode(true) as HTMLButtonElement;
+        cancelBtn.replaceWith(newCancelBtn);
+        confirmBtn.replaceWith(newConfirmBtn);
+
+        // Cancel handler
+        newCancelBtn.addEventListener('click', () => {
+            dialog.style.display = 'none';
+            input.value = '';
+        });
+
+        dialog.querySelector('.storage-browser-overlay')?.addEventListener('click', () => {
+            dialog.style.display = 'none';
+            input.value = '';
+        }, { once: true });
+
+        // Enter key handler
+        input.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                newConfirmBtn.click();
+            }
+        }, { once: true });
+
+        // Confirm handler
+        newConfirmBtn.addEventListener('click', async () => {
+            const newFolderName = input.value.trim();
+            if (!newFolderName) return;
+
+            dialog.style.display = 'none';
+            await this.renameFolder(folderName, newFolderName);
+        });
+    }
+
+    private showRenameDialog(file: StorageFile): void {
+        this.fileToRename = file;
+
+        const dialog = this.querySelector<HTMLDivElement>(`#rename-dialog-${this.triggerId}`);
+        const fileNameDisplay = this.querySelector<HTMLSpanElement>(`#rename-current-name-${this.triggerId}`);
+        const input = this.querySelector<HTMLInputElement>(`#rename-input-${this.triggerId}`);
+        const confirmBtn = this.querySelector<HTMLButtonElement>(`#rename-confirm-btn-${this.triggerId}`);
+        const cancelBtn = this.querySelector<HTMLButtonElement>(`#rename-cancel-btn-${this.triggerId}`);
+
+        if (!dialog || !fileNameDisplay || !input || !confirmBtn || !cancelBtn) return;
+
+        // Extract current filename without timestamp prefix
+        const currentFileName = file.key.split('/').pop() || '';
+        const fileNameWithoutTimestamp = currentFileName.replace(/^\d+-/, '');
+
+        // Display current filename
+        fileNameDisplay.textContent = currentFileName;
+
+        // Pre-fill input with filename without timestamp
+        input.value = fileNameWithoutTimestamp;
+
+        // Show dialog
+        dialog.style.display = 'flex';
+
+        // Focus and select input
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 100);
+
+        // Remove any existing event listeners by cloning and replacing the buttons
+        const newCancelBtn = cancelBtn.cloneNode(true) as HTMLButtonElement;
+        const newConfirmBtn = confirmBtn.cloneNode(true) as HTMLButtonElement;
+        cancelBtn.replaceWith(newCancelBtn);
+        confirmBtn.replaceWith(newConfirmBtn);
+
+        // Cancel handler
+        newCancelBtn.addEventListener('click', () => {
+            dialog.style.display = 'none';
+            this.fileToRename = null;
+            input.value = '';
+        });
+
+        dialog.querySelector('.storage-browser-overlay')?.addEventListener('click', () => {
+            dialog.style.display = 'none';
+            this.fileToRename = null;
+            input.value = '';
+        }, { once: true });
+
+        // Enter key handler
+        input.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                newConfirmBtn.click();
+            }
+        }, { once: true });
+
+        // Confirm handler
+        newConfirmBtn.addEventListener('click', async () => {
+            const newFileName = input.value.trim();
+            if (!newFileName) return;
+
+            dialog.style.display = 'none';
+            await this.renameFile(newFileName);
+        });
+    }
+
+    private async renameFile(newFileName: string): Promise<void> {
+        if (!this.fileToRename) return;
+
+        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        if (!content) return;        // Show loading
+        content.innerHTML = `
+            <div class="storage-browser-loading" role="status" aria-live="polite">
+                <div class="storage-browser-spinner" aria-hidden="true"></div>
+                <p>Renaming file...</p>
+            </div>
+        `; try {
+            // Build new key with timestamp prefix
+            const pathParts = this.fileToRename.key.split('/');
+            const oldFileName = pathParts.pop() || '';
+            const path = pathParts.length > 0 ? pathParts.join('/') + '/' : '';
+            const newKey = `${path}${Date.now()}-${newFileName}`;
+
+            console.log('Renaming file:', {
+                oldKey: this.fileToRename.key,
+                newKey: newKey,
+                action: 'rename'
+            });
+
+            const response = await fetch(this.apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'rename',
+                    key: this.fileToRename.key,
+                    newKey: newKey
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Rename failed');
+            }
+
+            // Reload files
+            await this.loadFiles();
+        } catch (error) {
+            console.error('Rename error:', error);
+            content.innerHTML = `
+                <div class="storage-browser-error" role="alert">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>Failed to rename file</p>
+                    <p style="font-size: 0.875rem; opacity: 0.7;">${error instanceof Error ? error.message : 'Unknown error'}</p>
+                </div>
+            `;
+            setTimeout(() => this.loadFiles(), 2000);
+        } finally {
+            this.fileToRename = null;
+        }
+    }
+
+    private isFilePreviewable(ext: string | undefined): boolean {
+        if (!ext) return false;
+
+        const previewableExtensions = [
+            // Images
+            'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico',
+            // Documents
+            'pdf', 'txt', 'md', 'json', 'xml', 'csv',
+            // Code
+            'html', 'css', 'js', 'ts', 'jsx', 'tsx', 'vue', 'astro',
+            // Video
+            'mp4', 'webm', 'ogg',
+            // Audio
+            'mp3', 'wav', 'ogg', 'm4a'
+        ];
+
+        return previewableExtensions.includes(ext.toLowerCase());
+    }
+
+    private async showPreview(file: StorageFile): Promise<void> {
+        const dialog = this.querySelector<HTMLDivElement>(`#preview-dialog-${this.triggerId}`);
+        const content = this.querySelector<HTMLDivElement>(`#preview-content-${this.triggerId}`);
+        const loading = this.querySelector<HTMLDivElement>(`#preview-loading-${this.triggerId}`);
+        const closeBtn = this.querySelector<HTMLButtonElement>(`#preview-close-btn-${this.triggerId}`);
+        const downloadBtn = this.querySelector<HTMLAnchorElement>(`#preview-download-btn-${this.triggerId}`);
+        const title = this.querySelector<HTMLHeadingElement>(`#preview-dialog-title-${this.triggerId}`);
+
+        if (!dialog || !content || !loading || !closeBtn || !downloadBtn || !title) {
+            console.error('Preview dialog elements not found');
+            return;
+        }
+
+        // Clear all previous content first (except loading indicator)
+        const children = Array.from(content.children);
+        children.forEach(child => {
+            if (child !== loading) {
+                content.removeChild(child);
+            }
+        });
+
+        // Reset download button
+        downloadBtn.href = '';
+        downloadBtn.removeAttribute('download');
+
+        // Show dialog and loading state
+        dialog.style.display = 'flex';
+        loading.style.display = 'flex';
+
+        // Get file info
+        const fileName = file.key.split('/').pop() || 'File';
+        const fileExt = fileName.split('.').pop()?.toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(fileExt || '');
+
+        try {
+            const response = await fetch(this.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'publicUrl', key: file.key })
+            });
+
+            if (!response.ok) throw new Error('Failed to get file URL');
+
+            const result = await response.json();
+            const fileUrl = result.url;
+
+            if (!fileUrl) {
+                throw new Error('No URL returned from API');
+            }
+
+            // Update dialog title and download button
+            title.textContent = fileName;
+            downloadBtn.href = fileUrl;
+            downloadBtn.download = fileName;
+
+            // Render preview based on file type
+            if (isImage) {
+                // Use direct image rendering for better display
+                const img = document.createElement('img');
+                img.className = 'storage-browser-preview-image';
+                img.alt = fileName;
+                img.onload = () => {
+                    loading.style.display = 'none';
+                };
+                img.onerror = () => {
+                    loading.style.display = 'none';
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'storage-browser-preview-error';
+                    errorDiv.textContent = 'Failed to load image';
+                    content.appendChild(errorDiv);
+                };
+                img.src = fileUrl;
+
+                // Add image (content already cleared at start of function)
+                content.appendChild(img);
+            } else {
+                // Use iframe for other file types
+                const iframe = document.createElement('iframe');
+                iframe.className = 'storage-browser-preview-iframe';
+                iframe.sandbox.add('allow-same-origin');
+                iframe.title = 'File preview';
+                iframe.onload = () => {
+                    loading.style.display = 'none';
+                };
+                iframe.src = fileUrl;
+
+                // Add iframe (content already cleared at start of function)
+                content.appendChild(iframe);
+            }
+
+            // Close handler
+            const handleClose = () => {
+                dialog.style.display = 'none';
+
+                // Clear all content except loading indicator
+                const children = Array.from(content.children);
+                children.forEach(child => {
+                    if (child !== loading) {
+                        content.removeChild(child);
+                    }
+                });
+
+                // Reset download button
+                downloadBtn.href = '';
+                downloadBtn.removeAttribute('download');
+
+                // Reset loading state
+                loading.style.display = 'flex';
+            };
+
+            closeBtn.addEventListener('click', handleClose, { once: true });
+            dialog.querySelector('.storage-browser-overlay')?.addEventListener('click', handleClose, { once: true });
+
+            // ESC key handler
+            const handleEsc = (e: KeyboardEvent) => {
+                if (e.key === 'Escape') {
+                    handleClose();
+                    document.removeEventListener('keydown', handleEsc);
+                }
+            };
+            document.addEventListener('keydown', handleEsc);
+        } catch (error) {
+            console.error('Preview error:', error);
+            loading.style.display = 'none';
+            content.innerHTML = `<div class="storage-browser-preview-error">Failed to preview file: ${error instanceof Error ? error.message : 'Unknown error'}</div>`;
         }
     }
 }

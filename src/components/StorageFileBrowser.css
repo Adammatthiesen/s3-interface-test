@@ -433,11 +433,134 @@
     background: var(--storage-browser-accent-hover);
 }
 
-.storage-browser-btn-primary:focus-visible {
+.storage-browser-btn-danger:focus-visible {
     outline: 2px solid var(--storage-browser-focus-ring);
     outline-offset: 2px;
 }
 
+/* Preview Dialog */
+.storage-browser-preview-dialog {
+    max-width: 95vw;
+    max-height: 95vh;
+    width: 1400px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.storage-browser-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--storage-browser-spacing-lg) var(--storage-browser-spacing-xl);
+    border-bottom: 1px solid var(--storage-browser-border-primary);
+    background: var(--storage-browser-bg-secondary);
+    flex-shrink: 0;
+}
+
+.storage-browser-preview-actions {
+    display: flex;
+    gap: var(--storage-browser-spacing-sm);
+    align-items: center;
+}
+
+.storage-browser-preview-content {
+    padding: 0;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: var(--storage-browser-bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.storage-browser-preview-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--storage-browser-spacing-md);
+    color: var(--storage-browser-text-secondary);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.storage-browser-preview-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    padding: var(--storage-browser-spacing-xl);
+    text-align: center;
+}
+
+.storage-browser-preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #ffffff;
+}
+
+.storage-browser-preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.storage-browser-preview-download {
+    background: transparent;
+    border: 1px solid var(--storage-browser-border-secondary);
+    color: var(--storage-browser-text-secondary);
+    cursor: pointer;
+    padding: var(--storage-browser-spacing-sm);
+    border-radius: var(--storage-browser-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--storage-browser-transition-fast);
+    text-decoration: none;
+}
+
+.storage-browser-preview-download:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--storage-browser-accent);
+    color: var(--storage-browser-accent);
+}
+
+.storage-browser-preview-download:focus-visible {
+    outline: 2px solid var(--storage-browser-focus-ring);
+    outline-offset: 2px;
+}
+
+.storage-browser-preview-close {
+    background: transparent;
+    border: 1px solid var(--storage-browser-border-secondary);
+    color: var(--storage-browser-text-secondary);
+    cursor: pointer;
+    padding: var(--storage-browser-spacing-sm);
+    border-radius: var(--storage-browser-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--storage-browser-transition-fast);
+}
+
+.storage-browser-preview-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.storage-browser-preview-close:focus-visible {
+    outline: 2px solid var(--storage-browser-focus-ring);
+    outline-offset: 2px;
+}
+
+/* Action Buttons (Create Folder, Upload) */
 .storage-browser-btn-primary:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -577,7 +700,6 @@
     color: var(--storage-browser-text-muted);
 }
 
-
 .storage-browser-dialog-footer {
     display: flex;
     justify-content: flex-end;
@@ -587,38 +709,98 @@
     background: var(--storage-browser-bg-secondary);
 }
 
-/* Delete Button on Files */
-.storage-browser-delete-btn {
+/* File Actions Bar */
+.storage-browser-file-actions {
     position: absolute;
-    top: var(--storage-browser-spacing-sm);
-    right: var(--storage-browser-spacing-sm);
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: var(--storage-browser-radius-sm);
-    padding: var(--storage-browser-spacing-xs);
-    cursor: pointer;
+    top: var(--storage-browser-spacing-xs);
+    right: var(--storage-browser-spacing-xs);
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(20, 20, 30, 0.95);
+    backdrop-filter: blur(12px);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     opacity: 0;
-    transition: all var(--storage-browser-transition-fast);
+    transform: translateY(-4px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+}
+
+.storage-browser-item:hover .storage-browser-file-actions,
+.storage-browser-item:focus-within .storage-browser-file-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Action Buttons */
+.storage-browser-delete-btn,
+.storage-browser-rename-btn,
+.storage-browser-preview-btn {
+    position: static;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 7px;
+    cursor: pointer;
+    transition: all 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ef4444;
+    width: 30px;
+    height: 30px;
+}
+
+/* Delete Button */
+.storage-browser-delete-btn {
+    color: #fca5a5;
 }
 
 .storage-browser-delete-btn:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.25);
     border-color: rgba(239, 68, 68, 0.5);
+    color: #fecaca;
 }
 
 .storage-browser-delete-btn:focus-visible {
     outline: 2px solid var(--storage-browser-focus-ring);
     outline-offset: 2px;
-    opacity: 1;
 }
 
-.storage-browser-item:hover .storage-browser-delete-btn,
-.storage-browser-item:focus-within .storage-browser-delete-btn {
-    opacity: 1;
+/* Rename Button */
+.storage-browser-rename-btn {
+    color: #93c5fd;
+}
+
+.storage-browser-rename-btn:hover {
+    background: rgba(96, 165, 250, 0.25);
+    border-color: rgba(96, 165, 250, 0.5);
+    color: #bfdbfe;
+}
+
+.storage-browser-rename-btn:focus-visible {
+    outline: 2px solid var(--storage-browser-focus-ring);
+    outline-offset: 2px;
+}
+
+/* Preview Button */
+.storage-browser-preview-btn {
+    color: #c4b5fd;
+}
+
+.storage-browser-preview-btn:hover {
+    background: rgba(168, 85, 247, 0.25);
+    border-color: rgba(168, 85, 247, 0.5);
+    color: #ddd6fe;
+}
+
+.storage-browser-preview-btn:focus-visible {
+    outline: 2px solid var(--storage-browser-focus-ring);
+    outline-offset: 2px;
 }
 
 .storage-browser-item {
