@@ -34,13 +34,4 @@ export class InMemoryDatabase implements UrlMappingDatabaseDefinition {
   async getAll(): Promise<UrlMapping[]> {
     return Array.from(this.store.values());
   }
-
-  // Utility methods for debugging
-  size(): number {
-    return this.store.size;
-  }
-
-  clear(): void {
-    this.store.clear();
-  }
 }
