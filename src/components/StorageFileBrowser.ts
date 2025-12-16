@@ -1793,7 +1793,7 @@ class StorageFileBrowser extends HTMLElement {
                 // Use iframe for other file types
                 const iframe = document.createElement('iframe');
                 iframe.className = 'storage-browser-preview-iframe';
-                iframe.sandbox.add('allow-same-origin');
+                iframe.sandbox.add('allow-same-origin', 'allow-scripts');
                 iframe.title = this.t('filePreview');
                 iframe.onload = () => {
                     loading.style.display = 'none';

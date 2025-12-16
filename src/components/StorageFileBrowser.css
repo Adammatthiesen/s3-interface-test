@@ -994,3 +994,311 @@ storage-file-browser * {
     outline: 2px solid var(--storage-browser-primary-vibrant);
     outline-offset: 2px;
 }
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+/* Mobile devices (up to 640px) */
+@media (max-width: 640px) {
+
+    /* Modal adjustments */
+    .storage-browser-container {
+        width: 95%;
+        max-width: none;
+        max-height: 95vh;
+        border-radius: var(--storage-browser-radius-md);
+    }
+
+    /* Header spacing */
+    .storage-browser-header {
+        padding: var(--storage-browser-spacing-lg) var(--storage-browser-spacing-xl);
+    }
+
+    .storage-browser-header h3,
+    .storage-browser-upload-header h3 {
+        font-size: var(--storage-browser-text-md);
+    }
+
+    /* Toolbar - stack vertically on very small screens */
+    .storage-browser-toolbar {
+        flex-direction: column;
+        gap: var(--storage-browser-spacing-md);
+        padding: var(--storage-browser-spacing-md) var(--storage-browser-spacing-lg);
+    }
+
+    .storage-browser-breadcrumb {
+        width: 100%;
+        order: 2;
+        font-size: var(--storage-browser-text-sm);
+    }
+
+    .storage-browser-toolbar-actions {
+        width: 100%;
+        justify-content: space-between;
+        order: 1;
+    }
+
+    /* Smaller buttons on mobile */
+    .storage-browser-btn-small {
+        padding: var(--storage-browser-spacing-xs) var(--storage-browser-spacing-sm);
+        font-size: var(--storage-browser-text-xs);
+        gap: var(--storage-browser-spacing-xs);
+    }
+
+    .storage-browser-btn-small svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    /* Grid - 2 columns on mobile */
+    .storage-browser-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--storage-browser-spacing-md);
+    }
+
+    /* Touch-friendly file items */
+    .storage-browser-item {
+        padding: var(--storage-browser-spacing-md);
+        min-height: 100px;
+    }
+
+    .storage-browser-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .storage-browser-name {
+        font-size: var(--storage-browser-text-xs);
+    }
+
+    /* Always show action buttons on mobile (no hover needed for touch) */
+    .storage-browser-file-actions {
+        opacity: 1;
+        transform: translateY(0);
+        position: static;
+        background: var(--storage-browser-bg-step-3);
+        margin-bottom: var(--storage-browser-spacing-xs);
+        padding: 2px;
+    }
+
+    /* Touch-friendly action buttons */
+    .storage-browser-delete-btn,
+    .storage-browser-rename-btn,
+    .storage-browser-preview-btn {
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+    }
+
+    /* Footer adjustments */
+    .storage-browser-footer {
+        flex-direction: column;
+        gap: var(--storage-browser-spacing-md);
+        padding: var(--storage-browser-spacing-lg);
+        align-items: stretch;
+    }
+
+    .storage-browser-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .storage-browser-actions .storage-browser-btn {
+        flex: 1;
+    }
+
+    /* Dialog adjustments */
+    .storage-browser-dialog-container {
+        width: 95%;
+        max-width: none;
+    }
+
+    .storage-browser-dialog-small {
+        max-width: none;
+    }
+
+    .storage-browser-dialog-header,
+    .storage-browser-dialog-content,
+    .storage-browser-dialog-footer {
+        padding: var(--storage-browser-spacing-lg);
+    }
+
+    /* Upload dialog */
+    .storage-browser-upload-file-item {
+        gap: var(--storage-browser-spacing-xs);
+    }
+
+    .storage-browser-upload-file-item label {
+        font-size: var(--storage-browser-text-xs);
+    }
+
+    /* Preview dialog */
+    .storage-browser-preview-dialog {
+        width: 100%;
+        max-width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .storage-browser-preview-header {
+        padding: var(--storage-browser-spacing-md) var(--storage-browser-spacing-lg);
+    }
+
+    .storage-browser-preview-header h3 {
+        font-size: var(--storage-browser-text-md);
+    }
+
+    /* Progress bar */
+    .storage-browser-progress {
+        max-width: 100%;
+    }
+}
+
+/* Small tablets (641px - 768px) */
+@media (min-width: 641px) and (max-width: 768px) {
+    .storage-browser-container {
+        width: 92%;
+    }
+
+    /* Grid - 3 columns on small tablets */
+    .storage-browser-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* Toolbar wrapping */
+    .storage-browser-toolbar {
+        gap: var(--storage-browser-spacing-md);
+    }
+
+    .storage-browser-breadcrumb {
+        flex: 1 1 100%;
+        min-width: 100%;
+    }
+}
+
+/* Tablets (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .storage-browser-container {
+        width: 90%;
+        max-width: 700px;
+    }
+
+    /* Grid - 4 columns on tablets */
+    .storage-browser-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* Show file actions on hover for non-touch devices */
+    @media (hover: hover) and (pointer: fine) {
+        .storage-browser-file-actions {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        .storage-browser-item:hover .storage-browser-file-actions,
+        .storage-browser-item:focus-within .storage-browser-file-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Always show on touch devices */
+    @media (hover: none) {
+        .storage-browser-file-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* Desktop (1025px and up) */
+@media (min-width: 1025px) {
+
+    /* Grid - 5 columns on large screens */
+    .storage-browser-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+
+    /* Hover states only for devices with hover capability */
+    @media (hover: hover) and (pointer: fine) {
+        .storage-browser-file-actions {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        .storage-browser-item:hover .storage-browser-file-actions,
+        .storage-browser-item:focus-within .storage-browser-file-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* Touch device specific adjustments (any screen size) */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Always show action buttons on touch devices */
+    .storage-browser-file-actions {
+        opacity: 1;
+        transform: translateY(0);
+        background: var(--storage-browser-bg-step-3);
+    }
+
+    /* Larger touch targets */
+    .storage-browser-delete-btn,
+    .storage-browser-rename-btn,
+    .storage-browser-preview-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .storage-browser-btn {
+        min-height: 44px;
+    }
+
+    .storage-browser-close {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* Remove hover effects on touch devices */
+    .storage-browser-item:hover {
+        border-color: var(--storage-browser-border);
+        background: var(--storage-browser-bg-step-2);
+    }
+
+    .storage-browser-item:active {
+        border-color: var(--storage-browser-primary-base);
+        background: var(--storage-browser-bg-step-3);
+    }
+}
+
+/* Landscape orientation on small devices */
+@media (max-width: 768px) and (orientation: landscape) {
+    .storage-browser-container {
+        max-height: 95vh;
+    }
+
+    .storage-browser-content {
+        max-height: calc(95vh - 250px);
+    }
+
+    .storage-browser-preview-dialog {
+        height: 100vh;
+    }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .storage-browser-file-actions {
+        transition: none;
+    }
+}
