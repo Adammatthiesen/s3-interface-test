@@ -46,6 +46,7 @@ const {
 
 // Convert fileTypes array to JSON string for the custom element
 const fileTypesJson = JSON.stringify(fileTypes);
+const translationMap = JSON.stringify(translations);
 ---
 
 <storage-file-browser
@@ -55,7 +56,7 @@ const fileTypesJson = JSON.stringify(fileTypes);
   files-only={filesOnly.toString()}
   return-type={returnType}
   api-endpoint={apiEndpoint}
-  translation-map={JSON.stringify(translations)}
+  translation-map={translationMap}
   locale-storage-key={localeStorageKey}
 ></storage-file-browser>
 
