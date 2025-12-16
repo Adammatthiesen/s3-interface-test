@@ -33,27 +33,28 @@ export class AstroContextDriver implements ContextDriverDefinition<APIContext, R
         });
     }
 
-    buildPostEndpoint(contextHandler: ContextHandler): ContextHandlerFn<APIContext, Response> {
-        return async (context: APIContext): Promise<Response> => {
+    buildErrorResponse(error: unknown) {
+        return { data: { error: (error as Error).message }, status: 500 };
+    }
+
+    handleEndpoint(contextHandler: ContextHandler) {
+        return async (rawContext: APIContext): Promise<Response> => {
             try {
-                const parsedContext = this.parseContext(context);
-                const res = await contextHandler(parsedContext);
-                return this.buildResponse(res);
+                const context = this.parseContext(rawContext);
+                const opts = await contextHandler(context);
+                return this.buildResponse(opts);
             } catch (error) {
-                return this.buildResponse({ data: { error: (error as Error).message }, status: 500 });
+                const errorResponse = this.buildErrorResponse(error);
+                return this.buildResponse(errorResponse);
             }
-        };
+        }
+    }
+
+    buildPostEndpoint(contextHandler: ContextHandler): ContextHandlerFn<APIContext, Response> {
+        return this.handleEndpoint(contextHandler);
     }
 
     buildPutEndpoint(contextHandler: ContextHandler): ContextHandlerFn<APIContext, Response> {
-        return async (context: APIContext): Promise<Response> => {
-            try {
-                const parsedContext = this.parseContext(context);
-                const res = await contextHandler(parsedContext);
-                return this.buildResponse(res);
-            } catch (error) {
-                return this.buildResponse({ data: { error: (error as Error).message }, status: 500 });
-            }
-        };
+        return this.handleEndpoint(contextHandler);
     }
 }
