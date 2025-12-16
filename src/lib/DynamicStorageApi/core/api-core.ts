@@ -1,0 +1,37 @@
+import type { ContextDriverDefinition, APICoreDefinition, UrlMappingServiceDefinition, StorageApiBuilderDefinition } from "../definitions";
+
+export class APICore<C extends unknown, R extends unknown> implements APICoreDefinition<C, R> {
+    driver: ContextDriverDefinition<C, R>;
+    urlMappingService: UrlMappingServiceDefinition;
+    storageDriver: StorageApiBuilderDefinition<C, R>;
+
+    constructor(opts: {
+        driver: ContextDriverDefinition<C, R>,
+        urlMappingService: UrlMappingServiceDefinition,
+        storageDriver: StorageApiBuilderDefinition<C, R>,
+    }) {
+        this.driver = opts.driver;
+        this.urlMappingService = opts.urlMappingService;
+        this.storageDriver = opts.storageDriver;
+    }
+
+    getDriver() {
+        return this.driver;
+    }
+
+    getUrlMappingService() {
+        return this.urlMappingService;
+    }
+
+    getStorageDriver() {
+        return this.storageDriver;
+    }
+
+    getPOST() {
+        return this.storageDriver.getPOST();
+    }
+
+    getPUT() {
+        return this.storageDriver.getPUT();
+    }
+}

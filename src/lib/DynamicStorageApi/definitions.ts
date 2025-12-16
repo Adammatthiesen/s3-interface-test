@@ -64,3 +64,14 @@ export interface UrlMappingServiceDefinition {
     getAll(): Promise<UrlMetadata[]>;
     createIdentifier(key: string): string;
 }
+
+export interface APICoreDefinition<C extends unknown, R extends unknown> {
+    driver: ContextDriverDefinition<C, R>;
+    urlMappingService: UrlMappingServiceDefinition;
+    storageDriver: StorageApiBuilderDefinition<C, R>;
+    getDriver(): ContextDriverDefinition<C, R>;
+    getUrlMappingService(): UrlMappingServiceDefinition;
+    getStorageDriver(): StorageApiBuilderDefinition<C, R>;
+    getPOST(): StorageAPIEndpointFn<C, R>;
+    getPUT(): StorageAPIEndpointFn<C, R>;
+}
