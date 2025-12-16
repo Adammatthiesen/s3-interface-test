@@ -15,7 +15,6 @@ export class AstroContextDriver implements ContextDriverDefinition<APIContext, R
                     }
                     case 'locals':
                     default: {
-
                         const fakeAstroLocals = {
                             isLoggedIn: true,
                         }

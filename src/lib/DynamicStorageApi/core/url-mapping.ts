@@ -13,8 +13,8 @@ export class UrlMappingService implements UrlMappingServiceDefinition {
    * Automatically refreshes expired URLs
    */
   async resolve(
-    identifier: string,
-    refreshCallback: (s3Key: string) => Promise<UrlMetadata>
+    identifier: `storage-file://${string}`,
+    refreshCallback: (key: string) => Promise<UrlMetadata>
   ): Promise<UrlMetadata> {
     const mapping = await this.database.get(identifier);
     const now = Date.now();
@@ -29,8 +29,8 @@ export class UrlMappingService implements UrlMappingServiceDefinition {
 
     // Case 2: Expired or missing - refresh from S3
     if (!mapping || (mapping.expiresAt && mapping.expiresAt <= now)) {
-      const s3Key = this.extractKeyFromIdentifier(identifier);
-      const metadata = await refreshCallback(s3Key);
+      const key = this.extractKeyFromIdentifier(identifier);
+      const metadata = await refreshCallback(key);
 
       await this.register(identifier, metadata);
 
@@ -49,7 +49,7 @@ export class UrlMappingService implements UrlMappingServiceDefinition {
    * Register a new URL mapping
    */
   async register(
-    identifier: string,
+    identifier: `storage-file://${string}`,
     metadata: UrlMetadata
   ): Promise<void> {
     const now = Date.now();
@@ -68,7 +68,7 @@ export class UrlMappingService implements UrlMappingServiceDefinition {
   /**
    * Delete a URL mapping
    */
-  async delete(identifier: string): Promise<void> {
+  async delete(identifier: `storage-file://${string}`): Promise<void> {
     await this.database.delete(identifier);
   }
 
@@ -90,7 +90,7 @@ export class UrlMappingService implements UrlMappingServiceDefinition {
    * Extract storage key from identifier
    * e.g., "storage-file://path/to/file.jpg" -> "path/to/file.jpg"
    */
-  private extractKeyFromIdentifier(identifier: string): string {
+  private extractKeyFromIdentifier(identifier: `storage-file://${string}`): string {
     if (identifier.startsWith('storage-file://')) {
       return identifier.substring('storage-file://'.length);
     }
@@ -102,7 +102,7 @@ export class UrlMappingService implements UrlMappingServiceDefinition {
    * Create identifier from storage key
    * e.g., "path/to/file.jpg" -> "storage-file://path/to/file.jpg"
    */
-  createIdentifier(s3Key: string): string {
-    return `storage-file://${s3Key}`;
+  createIdentifier(key: string): `storage-file://${string}` {
+    return `storage-file://${key}`;
   }
 }

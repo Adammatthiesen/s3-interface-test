@@ -15,7 +15,8 @@
 
 interface Source {
   /** Storage identifier or key for this source */
-  identifier?: string;
+  identifier?: `storage-file://${string}`;
+  /** Direct storage key (fallback) */
   storageKey?: string;
   /** Media query for this source */
   media?: string;
@@ -25,7 +26,7 @@ interface Source {
 
 interface Props {
   /** Primary storage file identifier (fallback image) */
-  identifier?: string;
+  identifier?: `storage-file://${string}`;
   /** Direct storage key (fallback) */
   storageKey?: string;
   /** Array of alternative image sources */

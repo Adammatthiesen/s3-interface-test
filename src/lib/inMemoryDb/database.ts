@@ -4,7 +4,7 @@ import type { UrlMapping, UrlMappingDatabaseDefinition } from '../DynamicStorage
 export class InMemoryDatabase implements UrlMappingDatabaseDefinition {
   private store: Map<string, UrlMapping> = new Map();
 
-  async get(identifier: string): Promise<UrlMapping | null> {
+  async get(identifier: `storage-file://${string}`): Promise<UrlMapping | null> {
     return this.store.get(identifier) || null;
   }
 
@@ -12,7 +12,7 @@ export class InMemoryDatabase implements UrlMappingDatabaseDefinition {
     this.store.set(mapping.identifier, mapping);
   }
 
-  async delete(identifier: string): Promise<void> {
+  async delete(identifier: `storage-file://${string}`): Promise<void> {
     this.store.delete(identifier);
   }
 

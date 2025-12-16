@@ -2,7 +2,7 @@ export type AuthorizationType = 'locals' | 'headers';
 
 type ContextBodyResolveUrl = {
     action: 'resolveUrl';
-    identifier: string;
+    identifier: `storage-file://${string}`;
 }
 
 type ContextBodyPublicUrl = {
@@ -75,7 +75,7 @@ export interface UrlMetadata {
 }
 
 export interface UrlMapping extends UrlMetadata {
-    identifier: string;
+    identifier: `storage-file://${string}`;
     createdAt: number;
     updatedAt: number;
 }
@@ -100,9 +100,9 @@ export interface StorageApiBuilderDefinition<C extends unknown, R extends unknow
 }
 
 export interface UrlMappingDatabaseDefinition {
-    get(identifier: string): Promise<UrlMapping | null>;
+    get(identifier: `storage-file://${string}`): Promise<UrlMapping | null>;
     set(mapping: UrlMapping): Promise<void>;
-    delete(identifier: string): Promise<void>;
+    delete(identifier: `storage-file://${string}`): Promise<void>;
     cleanup(): Promise<number>; // Returns count of deleted entries
     getAll(): Promise<UrlMapping[]>;
 }
@@ -110,17 +110,17 @@ export interface UrlMappingDatabaseDefinition {
 export interface UrlMappingServiceDefinition {
     database: UrlMappingDatabaseDefinition;
     resolve(
-        identifier: string,
+        identifier: `storage-file://${string}`,
         refreshCallback: (key: string) => Promise<UrlMetadata>
     ): Promise<UrlMetadata>;
     register(
-        identifier: string,
+        identifier: `storage-file://${string}`,
         metadata: UrlMetadata,
     ): Promise<void>;
-    delete(identifier: string): Promise<void>;
+    delete(identifier: `storage-file://${string}`): Promise<void>;
     cleanup(): Promise<number>;
     getAll(): Promise<UrlMetadata[]>;
-    createIdentifier(key: string): string;
+    createIdentifier(key: string): `storage-file://${string}`;
 }
 
 export interface APICoreDefinition<C extends unknown, R extends unknown> {

@@ -12,7 +12,7 @@
 
 interface Props {
   /** Storage file identifier (e.g., "storage-file://path/to/image.jpg") */
-  identifier?: string;
+  identifier?: `storage-file://${string}`;
   /** Direct storage key (will be converted to identifier) */
   storageKey?: string;
   /** Alt text for the image */

@@ -9,13 +9,13 @@ export class NoOpStorageService<C extends unknown, R extends unknown> implements
         this.urlMappingService = urlMappingService;
     }
 
-    getPOST(type?: AuthorizationType): StorageAPIEndpointFn<C, R> {
+    getPOST(_?: AuthorizationType): StorageAPIEndpointFn<C, R> {
         return this.driver.handleEndpoint(async () => {
             return { data: { error: 'noStorageConfigured' }, status: 501 };
         })
     }
 
-    getPUT(type?: AuthorizationType): StorageAPIEndpointFn<C, R> {
+    getPUT(_?: AuthorizationType): StorageAPIEndpointFn<C, R> {
         return this.driver.handleEndpoint(async () => {
             return { data: { error: 'noStorageConfigured' }, status: 501 };
         })

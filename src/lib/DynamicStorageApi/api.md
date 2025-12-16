@@ -39,11 +39,16 @@ Interact with database
 #### Json Params
 
 - `action` (see [Actions](#actions))
-- `key` - string
-- `contentType` - string
-- `prefix` - string
-- `identifier` - string
-- `newKey` - string
+- `key`
+  - **Type:** `string`
+- `contentType`
+  - **Type:** `string`
+- `prefix`
+  - **Type:** `string`
+- `identifier`
+  - **Type:** `storage-file://${string}`
+- `newKey`
+  - **Type:** `string`
 
 #### Actions
 
