@@ -84,6 +84,7 @@ interface TranslationStrings {
     failedToLoadImage: string;
     failedConnection: string;
     checkConfiguration: string;
+    noStorageConfigured: string;
     unknownError: string;
 
     // Aria Labels
@@ -562,11 +563,26 @@ class StorageFileBrowser extends HTMLElement {
                 body: JSON.stringify({ action: 'test' }),
             });
 
-            if (!response.ok) {
-                throw new Error('Connection test failed');
+            const data = await response.json();
+
+            // Handle 501 from no-op storage provider
+            if (response.status === 501 && data.error) {
+                this.connectionEstablished = false;
+                content.innerHTML = `
+                    <div class="storage-browser-error" role="alert">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p>${this.t(data.error)}</p>
+                    </div>
+                `;
+                return false;
             }
 
-            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Connection test failed');
+            }
+
             this.connectionEstablished = data.success === true;
 
             if (!this.connectionEstablished) {

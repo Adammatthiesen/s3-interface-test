@@ -508,7 +508,7 @@ storage-file-browser * {
 }
 
 .storage-browser-error {
-    color: var(--storage-browser-danger-base);
+    color: var(--storage-browser-danger-vibrant);
 }
 
 .storage-browser-footer {
@@ -576,6 +576,7 @@ storage-file-browser * {
 }
 
 /* Action Buttons (Create Folder, Upload) */
+.storage-browser-btn:disabled,
 .storage-browser-btn-primary:disabled {
     opacity: 0.4;
     cursor: not-allowed;
