@@ -1,4 +1,6 @@
 ---
+import { translations } from './StorageFileBrowser.translations';
+
 /**
  * StorageFileBrowser Component (Web Component Wrapper)
  * 
@@ -19,8 +21,6 @@ interface Props {
   triggerId: string;
   /** ID of the input field to populate with selected file URL */
   targetInputId: string;
-  /** Modal title */
-  title?: string;
   /** Filter by file types (MIME types) */
   fileTypes?: string[];
   /** Show only files (hide folders) */
@@ -30,13 +30,12 @@ interface Props {
   /** API endpoint for S3 operations */
   apiEndpoint?: string;
   /** Translation/Locale Settings */
-  locale?: 'en' | 'fr' | 'es' | 'de'
+  locale?: string
 }
 
 const { 
   triggerId, 
   targetInputId,
-  title = 'Select File',
   fileTypes = [],
   filesOnly = false,
   returnType = 'url',
@@ -51,12 +50,12 @@ const fileTypesJson = JSON.stringify(fileTypes);
 <storage-file-browser
   trigger-id={triggerId}
   target-input-id={targetInputId}
-  data-title={title}
   file-types={fileTypesJson}
   files-only={filesOnly.toString()}
   return-type={returnType}
   api-endpoint={apiEndpoint}
   locale={locale}
+  translation-map={JSON.stringify(translations)}
 ></storage-file-browser>
 
 <script src="./StorageFileBrowser.ts"></script>

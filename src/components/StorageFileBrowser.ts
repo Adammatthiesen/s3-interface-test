@@ -108,276 +108,6 @@ interface TranslationStrings {
 }
 
 /**
- * Translation dictionary
- */
-const translations: Record<string, TranslationStrings> = {
-    en: {
-        selectFile: 'Select File',
-        closeFileBrowser: 'Close file browser',
-        upload: 'Upload',
-        newFolder: 'New Folder',
-        refresh: 'Refresh',
-        root: 'Root',
-        loadingFiles: 'Loading files...',
-        testingConnection: 'Testing connection...',
-        noFilesHere: 'No files here',
-        noFileSelected: 'No file selected',
-        cancel: 'Cancel',
-        select: 'Select',
-        delete: 'Delete',
-        customizeFilenames: 'Customize Filenames',
-        filename: 'Filename',
-        deleteFile: 'Delete File?',
-        deleteFileConfirm: 'Are you sure you want to delete this file? This action cannot be undone.',
-        deleteFolder: 'Delete Folder?',
-        deleteFolderConfirm: 'Are you sure you want to delete this folder and all its contents? This action cannot be undone.',
-        createNewFolder: 'Create New Folder',
-        folderName: 'Folder Name',
-        create: 'Create',
-        renameFile: 'Rename File',
-        renameFolder: 'Rename Folder',
-        newName: 'New Name',
-        rename: 'Rename',
-        preview: 'Preview',
-        download: 'Download',
-        close: 'Close',
-        creatingFolder: 'Creating folder...',
-        uploadingFiles: 'Uploading files...',
-        uploadProgress: '{current} / {total} files uploaded',
-        deletingFile: 'Deleting file...',
-        deletingFolder: 'Deleting folder...',
-        renamingFile: 'Renaming file...',
-        renamingFolder: 'Renaming folder...',
-        failedToLoadFiles: 'Failed to load files',
-        failedToCreateFolder: 'Failed to create folder',
-        failedToUploadFiles: 'Failed to upload files',
-        failedToDeleteFile: 'Failed to delete file',
-        failedToDeleteFolder: 'Failed to delete folder',
-        failedToRenameFile: 'Failed to rename file',
-        failedToRenameFolder: 'Failed to rename folder',
-        failedToPreviewFile: 'Failed to preview file',
-        failedToLoadImage: 'Failed to load image',
-        failedConnection: 'Failed to establish connection to storage',
-        checkConfiguration: 'Please check your storage configuration',
-        unknownError: 'Unknown error',
-        fileBrowserActions: 'File browser actions',
-        filePathBreadcrumb: 'File path breadcrumb',
-        fileUploadInput: 'File upload input',
-        fileBrowserContent: 'File browser content',
-        filesAndFolders: 'Files and folders',
-        folderLabel: 'Folder: {name}',
-        fileLabel: 'File: {name}, Size: {size}',
-        renameLabel: 'Rename {name}',
-        deleteLabel: 'Delete {name}',
-        previewLabel: 'Preview {name}',
-        filenameForLabel: 'Filename for {name}',
-        uploadProgressLabel: 'Upload progress',
-        original: 'Original',
-        size: 'Size',
-        andAllItsContents: 'and all its contents',
-        filePreview: 'File preview',
-    },
-    fr: {
-        selectFile: 'Sélectionner un fichier',
-        closeFileBrowser: 'Fermer le navigateur de fichiers',
-        upload: 'Téléverser',
-        newFolder: 'Nouveau dossier',
-        refresh: 'Actualiser',
-        root: 'Racine',
-        loadingFiles: 'Chargement des fichiers...',
-        testingConnection: 'Test de connexion...',
-        noFilesHere: 'Aucun fichier ici',
-        noFileSelected: 'Aucun fichier sélectionné',
-        cancel: 'Annuler',
-        select: 'Sélectionner',
-        delete: 'Supprimer',
-        customizeFilenames: 'Personnaliser les noms de fichiers',
-        filename: 'Nom du fichier',
-        deleteFile: 'Supprimer le fichier ?',
-        deleteFileConfirm: 'Êtes-vous sûr de vouloir supprimer ce fichier ? Cette action est irréversible.',
-        deleteFolder: 'Supprimer le dossier ?',
-        deleteFolderConfirm: 'Êtes-vous sûr de vouloir supprimer ce dossier et tout son contenu ? Cette action est irréversible.',
-        createNewFolder: 'Créer un nouveau dossier',
-        folderName: 'Nom du dossier',
-        create: 'Créer',
-        renameFile: 'Renommer le fichier',
-        renameFolder: 'Renommer le dossier',
-        newName: 'Nouveau nom',
-        rename: 'Renommer',
-        preview: 'Aperçu',
-        download: 'Télécharger',
-        close: 'Fermer',
-        creatingFolder: 'Création du dossier...',
-        uploadingFiles: 'Téléversement des fichiers...',
-        uploadProgress: '{current} / {total} fichiers téléversés',
-        deletingFile: 'Suppression du fichier...',
-        deletingFolder: 'Suppression du dossier...',
-        renamingFile: 'Renommage du fichier...',
-        renamingFolder: 'Renommage du dossier...',
-        failedToLoadFiles: 'Échec du chargement des fichiers',
-        failedToCreateFolder: 'Échec de la création du dossier',
-        failedToUploadFiles: 'Échec du téléversement des fichiers',
-        failedToDeleteFile: 'Échec de la suppression du fichier',
-        failedToDeleteFolder: 'Échec de la suppression du dossier',
-        failedToRenameFile: 'Échec du renommage du fichier',
-        failedToRenameFolder: 'Échec du renommage du dossier',
-        failedToPreviewFile: 'Échec de l\'aperçu du fichier',
-        failedToLoadImage: 'Échec du chargement de l\'image',
-        failedConnection: 'Échec de la connexion au stockage',
-        checkConfiguration: 'Veuillez vérifier votre configuration de stockage',
-        unknownError: 'Erreur inconnue',
-        fileBrowserActions: 'Actions du navigateur de fichiers',
-        filePathBreadcrumb: 'Fil d\'Ariane du chemin de fichier',
-        fileUploadInput: 'Entrée de téléversement de fichier',
-        fileBrowserContent: 'Contenu du navigateur de fichiers',
-        filesAndFolders: 'Fichiers et dossiers',
-        folderLabel: 'Dossier : {name}',
-        fileLabel: 'Fichier : {name}, Taille : {size}',
-        renameLabel: 'Renommer {name}',
-        deleteLabel: 'Supprimer {name}',
-        previewLabel: 'Aperçu {name}',
-        filenameForLabel: 'Nom de fichier pour {name}',
-        uploadProgressLabel: 'Progression du téléversement',
-        original: 'Original',
-        size: 'Taille',
-        andAllItsContents: 'et tout son contenu',
-        filePreview: 'Aperçu du fichier',
-    },
-    es: {
-        selectFile: 'Seleccionar archivo',
-        closeFileBrowser: 'Cerrar navegador de archivos',
-        upload: 'Subir',
-        newFolder: 'Nueva carpeta',
-        refresh: 'Actualizar',
-        root: 'Raíz',
-        loadingFiles: 'Cargando archivos...',
-        testingConnection: 'Probando conexión...',
-        noFilesHere: 'No hay archivos aquí',
-        noFileSelected: 'Ningún archivo seleccionado',
-        cancel: 'Cancelar',
-        select: 'Seleccionar',
-        delete: 'Eliminar',
-        customizeFilenames: 'Personalizar nombres de archivo',
-        filename: 'Nombre de archivo',
-        deleteFile: '¿Eliminar archivo?',
-        deleteFileConfirm: '¿Está seguro de que desea eliminar este archivo? Esta acción no se puede deshacer.',
-        deleteFolder: '¿Eliminar carpeta?',
-        deleteFolderConfirm: '¿Está seguro de que desea eliminar esta carpeta y todo su contenido? Esta acción no se puede deshacer.',
-        createNewFolder: 'Crear nueva carpeta',
-        folderName: 'Nombre de carpeta',
-        create: 'Crear',
-        renameFile: 'Renombrar archivo',
-        renameFolder: 'Renombrar carpeta',
-        newName: 'Nuevo nombre',
-        rename: 'Renombrar',
-        preview: 'Vista previa',
-        download: 'Descargar',
-        close: 'Cerrar',
-        creatingFolder: 'Creando carpeta...',
-        uploadingFiles: 'Subiendo archivos...',
-        uploadProgress: '{current} / {total} archivos subidos',
-        deletingFile: 'Eliminando archivo...',
-        deletingFolder: 'Eliminando carpeta...',
-        renamingFile: 'Renombrando archivo...',
-        renamingFolder: 'Renombrando carpeta...',
-        failedToLoadFiles: 'Error al cargar archivos',
-        failedToCreateFolder: 'Error al crear carpeta',
-        failedToUploadFiles: 'Error al subir archivos',
-        failedToDeleteFile: 'Error al eliminar archivo',
-        failedToDeleteFolder: 'Error al eliminar carpeta',
-        failedToRenameFile: 'Error al renombrar archivo',
-        failedToRenameFolder: 'Error al renombrar carpeta',
-        failedToPreviewFile: 'Error al previsualizar archivo',
-        failedToLoadImage: 'Error al cargar imagen',
-        failedConnection: 'Error al establecer conexión con el almacenamiento',
-        checkConfiguration: 'Por favor verifique su configuración de almacenamiento',
-        unknownError: 'Error desconocido',
-        fileBrowserActions: 'Acciones del explorador de archivos',
-        filePathBreadcrumb: 'Ruta de navegación de archivos',
-        fileUploadInput: 'Entrada de carga de archivos',
-        fileBrowserContent: 'Contenido del explorador de archivos',
-        filesAndFolders: 'Archivos y carpetas',
-        folderLabel: 'Carpeta: {name}',
-        fileLabel: 'Archivo: {name}, Tamaño: {size}',
-        renameLabel: 'Renombrar {name}',
-        deleteLabel: 'Eliminar {name}',
-        previewLabel: 'Vista previa {name}',
-        filenameForLabel: 'Nombre de archivo para {name}',
-        uploadProgressLabel: 'Progreso de carga',
-        original: 'Original',
-        size: 'Tamaño',
-        andAllItsContents: 'y todo su contenido',
-        filePreview: 'Vista previa del archivo',
-    },
-    de: {
-        selectFile: 'Datei auswählen',
-        closeFileBrowser: 'Dateibrowser schließen',
-        upload: 'Hochladen',
-        newFolder: 'Neuer Ordner',
-        refresh: 'Aktualisieren',
-        root: 'Wurzel',
-        loadingFiles: 'Dateien werden geladen...',
-        testingConnection: 'Verbindung wird getestet...',
-        noFilesHere: 'Keine Dateien hier',
-        noFileSelected: 'Keine Datei ausgewählt',
-        cancel: 'Abbrechen',
-        select: 'Auswählen',
-        delete: 'Löschen',
-        customizeFilenames: 'Dateinamen anpassen',
-        filename: 'Dateiname',
-        deleteFile: 'Datei löschen?',
-        deleteFileConfirm: 'Sind Sie sicher, dass Sie diese Datei löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
-        deleteFolder: 'Ordner löschen?',
-        deleteFolderConfirm: 'Sind Sie sicher, dass Sie diesen Ordner und seinen gesamten Inhalt löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
-        createNewFolder: 'Neuen Ordner erstellen',
-        folderName: 'Ordnername',
-        create: 'Erstellen',
-        renameFile: 'Datei umbenennen',
-        renameFolder: 'Ordner umbenennen',
-        newName: 'Neuer Name',
-        rename: 'Umbenennen',
-        preview: 'Vorschau',
-        download: 'Herunterladen',
-        close: 'Schließen',
-        creatingFolder: 'Ordner wird erstellt...',
-        uploadingFiles: 'Dateien werden hochgeladen...',
-        uploadProgress: '{current} / {total} Dateien hochgeladen',
-        deletingFile: 'Datei wird gelöscht...',
-        deletingFolder: 'Ordner wird gelöscht...',
-        renamingFile: 'Datei wird umbenannt...',
-        renamingFolder: 'Ordner wird umbenannt...',
-        failedToLoadFiles: 'Dateien konnten nicht geladen werden',
-        failedToCreateFolder: 'Ordner konnte nicht erstellt werden',
-        failedToUploadFiles: 'Dateien konnten nicht hochgeladen werden',
-        failedToDeleteFile: 'Datei konnte nicht gelöscht werden',
-        failedToDeleteFolder: 'Ordner konnte nicht gelöscht werden',
-        failedToRenameFile: 'Datei konnte nicht umbenannt werden',
-        failedToRenameFolder: 'Ordner konnte nicht umbenannt werden',
-        failedToPreviewFile: 'Vorschau der Datei fehlgeschlagen',
-        failedToLoadImage: 'Bild konnte nicht geladen werden',
-        failedConnection: 'Verbindung zum Speicher konnte nicht hergestellt werden',
-        checkConfiguration: 'Bitte überprüfen Sie Ihre Speicherkonfiguration',
-        unknownError: 'Unbekannter Fehler',
-        fileBrowserActions: 'Dateibrowser-Aktionen',
-        filePathBreadcrumb: 'Dateipfad-Brotkrümel',
-        fileUploadInput: 'Datei-Upload-Eingabe',
-        fileBrowserContent: 'Dateibrowser-Inhalt',
-        filesAndFolders: 'Dateien und Ordner',
-        folderLabel: 'Ordner: {name}',
-        fileLabel: 'Datei: {name}, Größe: {size}',
-        renameLabel: '{name} umbenennen',
-        deleteLabel: '{name} löschen',
-        previewLabel: 'Vorschau {name}',
-        filenameForLabel: 'Dateiname für {name}',
-        uploadProgressLabel: 'Upload-Fortschritt',
-        original: 'Original',
-        size: 'Größe',
-        andAllItsContents: 'und der gesamte Inhalt',
-        filePreview: 'Dateivorschau',
-    },
-};
-
-/**
  * StorageFileBrowser Custom Element
  * A web component for browsing and selecting files from cloud storage
  */
@@ -386,7 +116,6 @@ class StorageFileBrowser extends HTMLElement {
     private selectedFile: StorageFile | null = null;
     private triggerId!: string;
     private targetInputId!: string;
-    private modalTitle!: string;
     private fileTypes!: string[];
     private filesOnly!: boolean;
     private returnType!: StorageReturnType;
@@ -399,7 +128,8 @@ class StorageFileBrowser extends HTMLElement {
     private fileToRename: StorageFile | null = null;
     private connectionEstablished: boolean = false;
     private currentLocale: string = 'en';
-    private translations: TranslationStrings = translations['en'];
+    private translations!: TranslationStrings;
+    private translationMap!: Record<string, TranslationStrings>;
 
     constructor() {
         super();
@@ -414,9 +144,9 @@ class StorageFileBrowser extends HTMLElement {
      * Set the current locale and update translations
      */
     private setLocale(locale: string): void {
-        if (translations[locale]) {
+        if (this.translationMap[locale]) {
             this.currentLocale = locale;
-            this.translations = translations[locale];
+            this.translations = this.translationMap[locale];
             // Re-render if component is already connected
             if (this.isConnected) {
                 this.render();
@@ -433,14 +163,19 @@ class StorageFileBrowser extends HTMLElement {
      * Get translation for a key
      */
     private t(key: keyof TranslationStrings): string {
-        return this.translations[key] || translations['en'][key] || key;
+        return this.translations[key] || this.translationMap['en'][key] || key;
     }
 
     connectedCallback(): void {
+        // TODO Implement nanostore based translation import once imported into StudioCMS
+        // Setup Translations
+        const translationMapAttr = this.getAttribute('translation-map');
+        this.translationMap = JSON.parse(translationMapAttr || '{}');
+        this.translations = this.translationMap[this.currentLocale] || this.translationMap['en'];
+
         // Get attributes
         this.triggerId = this.getAttribute('trigger-id') || '';
         this.targetInputId = this.getAttribute('target-input-id') || '';
-        this.modalTitle = this.getAttribute('data-title') || this.t('selectFile');
         const fileTypesAttr = this.getAttribute('file-types');
         this.fileTypes = fileTypesAttr ? JSON.parse(fileTypesAttr) : [];
 
@@ -467,7 +202,7 @@ class StorageFileBrowser extends HTMLElement {
         <div class="storage-browser-overlay" aria-hidden="true"></div>
         <div class="storage-browser-container">
           <div class="storage-browser-header">
-            <h3 id="modal-title-${this.triggerId}">${this.modalTitle}</h3>
+            <h3 id="modal-title-${this.triggerId}">${this.t('selectFile')}</h3>
             <button class="storage-browser-close" data-close-modal="${this.modalId}" aria-label="${this.t('closeFileBrowser')}">&times;</button>
           </div>
           
