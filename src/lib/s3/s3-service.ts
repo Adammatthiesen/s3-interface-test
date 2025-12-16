@@ -49,13 +49,6 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
         this.urlMappingService = urlMappingService;
     }
 
-    resolveUrl(identifier: string): Promise<UrlMetadata> {
-        return this.urlMappingService.resolve(
-            identifier,
-            generateUrlMetadata,
-        );
-    }
-
     getPOST(type?: AuthorizationType): StorageAPIEndpointFn<C, R> {
         return this.driver.handleEndpoint(async ({ getJson, isAuthorized }) => {
             const jsonBody = await getJson();

@@ -1,4 +1,4 @@
-import type { AuthorizationType, ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn, UrlMappingServiceDefinition, UrlMetadata } from "../definitions";
+import type { AuthorizationType, ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn, UrlMappingServiceDefinition } from "../definitions";
 
 export class NoOpStorageService<C extends unknown, R extends unknown> implements StorageApiBuilderDefinition<C, R> {
     driver: ContextDriverDefinition<C, R>;
@@ -7,10 +7,6 @@ export class NoOpStorageService<C extends unknown, R extends unknown> implements
     constructor(driver: ContextDriverDefinition<C, R>, urlMappingService: UrlMappingServiceDefinition) {
         this.driver = driver;
         this.urlMappingService = urlMappingService;
-    }
-
-    resolveUrl(identifier: string) {
-        return Promise.resolve<UrlMetadata | null>(null);
     }
 
     getPOST(type?: AuthorizationType): StorageAPIEndpointFn<C, R> {

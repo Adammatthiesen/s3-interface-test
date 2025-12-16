@@ -95,7 +95,6 @@ export type StorageAPIEndpointFn<C extends unknown, R extends unknown> = (contex
 export interface StorageApiBuilderDefinition<C extends unknown, R extends unknown> {
     driver: ContextDriverDefinition<C, R>;
     urlMappingService: UrlMappingServiceDefinition;
-    resolveUrl: (identifier: string) => Promise<UrlMetadata | null>;
     getPOST(type?: AuthorizationType): StorageAPIEndpointFn<C, R>;
     getPUT(type?: AuthorizationType): StorageAPIEndpointFn<C, R>;
 }
