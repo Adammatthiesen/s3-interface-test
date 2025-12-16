@@ -1,4 +1,4 @@
-import type { ContextDriverDefinition, APICoreDefinition, UrlMappingServiceDefinition, StorageApiBuilderDefinition } from "../definitions";
+import type { ContextDriverDefinition, APICoreDefinition, UrlMappingServiceDefinition, StorageApiBuilderDefinition, AuthorizationType } from "../definitions";
 
 export class APICore<C extends unknown, R extends unknown> implements APICoreDefinition<C, R> {
     driver: ContextDriverDefinition<C, R>;
@@ -27,11 +27,11 @@ export class APICore<C extends unknown, R extends unknown> implements APICoreDef
         return this.storageDriver;
     }
 
-    getPOST() {
-        return this.storageDriver.getPOST();
+    getPOST(type?: AuthorizationType) {
+        return this.storageDriver.getPOST(type);
     }
 
-    getPUT() {
-        return this.storageDriver.getPUT();
+    getPUT(type?: AuthorizationType) {
+        return this.storageDriver.getPUT(type);
     }
 }

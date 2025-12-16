@@ -1,7 +1,10 @@
+export type AuthorizationType = 'locals' | 'headers';
+
 export type ParsedContext = {
     getJson: () => Promise<any>;
     getArrayBuffer: () => Promise<ArrayBuffer>;
     getHeader: (name: string) => string | null;
+    isAuthorized: (type?: AuthorizationType) => boolean;
 };
 
 export interface UrlMetadata {
@@ -24,7 +27,7 @@ export interface ContextDriverDefinition<C extends unknown, R extends unknown> {
     // parsers
     parseContext: (context: C) => ParsedContext;
 
-    buildResponse: <D>(data: D, status: number) => R;
+    buildResponse: <D>(opts: { data: D, status: number }) => R;
 
     buildPostEndpoint(contextHandler: ContextHandler): ContextHandlerFn<C, R>;
 
@@ -37,8 +40,8 @@ export interface StorageApiBuilderDefinition<C extends unknown, R extends unknow
     driver: ContextDriverDefinition<C, R>;
     urlMappingService: UrlMappingServiceDefinition;
     resolveUrl: (identifier: string) => Promise<UrlMetadata>;
-    getPOST(): StorageAPIEndpointFn<C, R>;
-    getPUT(): StorageAPIEndpointFn<C, R>;
+    getPOST(type?: AuthorizationType): StorageAPIEndpointFn<C, R>;
+    getPUT(type?: AuthorizationType): StorageAPIEndpointFn<C, R>;
 }
 
 export interface UrlMappingDatabaseDefinition {
@@ -72,6 +75,6 @@ export interface APICoreDefinition<C extends unknown, R extends unknown> {
     getDriver(): ContextDriverDefinition<C, R>;
     getUrlMappingService(): UrlMappingServiceDefinition;
     getStorageDriver(): StorageApiBuilderDefinition<C, R>;
-    getPOST(): StorageAPIEndpointFn<C, R>;
-    getPUT(): StorageAPIEndpointFn<C, R>;
+    getPOST(type?: AuthorizationType): StorageAPIEndpointFn<C, R>;
+    getPUT(type?: AuthorizationType): StorageAPIEndpointFn<C, R>;
 }

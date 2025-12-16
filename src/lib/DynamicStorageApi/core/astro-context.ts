@@ -7,13 +7,29 @@ export class AstroContextDriver implements ContextDriverDefinition<APIContext, R
             getJson: () => request.json(),
             getArrayBuffer: () => request.arrayBuffer(),
             getHeader: (name: string) => request.headers.get(name),
+            isAuthorized: (type) => {
+                switch (type) {
+                    case 'headers': {
+                        const authHeader = request.headers.get('Authorization');
+                        return authHeader === 'Bearer my-secret-token';
+                    }
+                    case 'locals':
+                    default: {
+
+                        const fakeAstroLocals = {
+                            isLoggedIn: true,
+                        }
+                        return fakeAstroLocals.isLoggedIn;
+                    }
+                }
+            },
         };
     }
 
-    buildResponse(data: any, status: number): Response {
-        return new Response(JSON.stringify(data), {
+    buildResponse(opts: { data: any, status: number }): Response {
+        return new Response(JSON.stringify(opts.data), {
             headers: { 'Content-Type': 'application/json' },
-            status,
+            status: opts.status,
         });
     }
 
@@ -21,10 +37,10 @@ export class AstroContextDriver implements ContextDriverDefinition<APIContext, R
         return async (context: APIContext): Promise<Response> => {
             try {
                 const parsedContext = this.parseContext(context);
-                const { data, status } = await contextHandler(parsedContext);
-                return this.buildResponse(data, status);
+                const res = await contextHandler(parsedContext);
+                return this.buildResponse(res);
             } catch (error) {
-                return this.buildResponse({ error: (error as Error).message }, 500);
+                return this.buildResponse({ data: { error: (error as Error).message }, status: 500 });
             }
         };
     }
@@ -33,10 +49,10 @@ export class AstroContextDriver implements ContextDriverDefinition<APIContext, R
         return async (context: APIContext): Promise<Response> => {
             try {
                 const parsedContext = this.parseContext(context);
-                const { data, status } = await contextHandler(parsedContext);
-                return this.buildResponse(data, status);
+                const res = await contextHandler(parsedContext);
+                return this.buildResponse(res);
             } catch (error) {
-                return this.buildResponse({ error: (error as Error).message }, 500);
+                return this.buildResponse({ data: { error: (error as Error).message }, status: 500 });
             }
         };
     }

@@ -1,4 +1,4 @@
-import type { ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn, UrlMappingServiceDefinition, UrlMetadata } from "../DynamicStorageApi/definitions";
+import type { AuthorizationType, ContextDriverDefinition, StorageApiBuilderDefinition, StorageAPIEndpointFn, UrlMappingServiceDefinition, UrlMetadata } from "../DynamicStorageApi/definitions";
 import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -56,9 +56,15 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
         );
     }
 
-    getPOST(): StorageAPIEndpointFn<C, R> {
-        return this.driver.buildPostEndpoint(async ({ getJson }) => {
+    getPOST(type?: AuthorizationType): StorageAPIEndpointFn<C, R> {
+        return this.driver.buildPostEndpoint(async ({ getJson, isAuthorized }) => {
             const { action, key, contentType, prefix, identifier, newKey } = await getJson();
+
+            // Cases when authorization is required
+            const authRequiredActions = ['upload', 'delete', 'rename', 'cleanup', 'mappings', 'test', 'list'];
+            if (authRequiredActions.includes(action) && !isAuthorized(type)) {
+                return { data: { error: 'Unauthorized' }, status: 401 };
+            }
 
             switch (action) {
                 case 'resolveUrl': {
@@ -210,8 +216,13 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
         })
     }
 
-    getPUT(): StorageAPIEndpointFn<C, R> {
-        return this.driver.buildPutEndpoint(async ({ getArrayBuffer, getHeader }) => {
+    getPUT(type?: AuthorizationType): StorageAPIEndpointFn<C, R> {
+        return this.driver.buildPutEndpoint(async ({ getArrayBuffer, getHeader, isAuthorized }) => {
+
+            if (!isAuthorized(type)) {
+                return { data: { error: 'Unauthorized' }, status: 401 };
+            }
+
             try {
                 const contentType = getHeader('Content-Type') || 'application/octet-stream';
                 const key = getHeader('x-storage-key');

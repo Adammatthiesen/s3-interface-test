@@ -185,7 +185,7 @@ but with default fallbacks to ensure proper theming even if those variables are 
 }
 
 storage-file-browser {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--scms-font-onest), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 storage-file-browser * {
@@ -575,128 +575,6 @@ storage-file-browser * {
     outline-offset: 2px;
 }
 
-/* Preview Dialog */
-.storage-browser-preview-dialog {
-    max-width: 95vw;
-    max-height: 95vh;
-    width: 1400px;
-    height: 90vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.storage-browser-preview-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--storage-browser-spacing-lg) var(--storage-browser-spacing-xl);
-    border-bottom: 1px solid var(--storage-browser-border);
-    background: var(--storage-browser-bg-step-1);
-    flex-shrink: 0;
-}
-
-.storage-browser-preview-actions {
-    display: flex;
-    gap: var(--storage-browser-spacing-sm);
-    align-items: center;
-}
-
-.storage-browser-preview-content {
-    padding: 0;
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-    background: var(--storage-browser-bg-base);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.storage-browser-preview-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--storage-browser-spacing-md);
-    color: var(--storage-browser-text-dimmed);
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.storage-browser-preview-error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--storage-browser-danger-base);
-    padding: var(--storage-browser-spacing-xl);
-    text-align: center;
-}
-
-.storage-browser-preview-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: var(--storage-browser-white);
-}
-
-.storage-browser-preview-image {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    display: block;
-}
-
-.storage-browser-preview-download {
-    background: transparent;
-    border: 1px solid var(--storage-browser-border);
-    color: var(--storage-browser-text-dimmed);
-    cursor: pointer;
-    padding: var(--storage-browser-spacing-sm);
-    border-radius: var(--storage-browser-radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--storage-browser-transition-fast);
-    text-decoration: none;
-}
-
-.storage-browser-preview-download:hover {
-    background: var(--storage-browser-default-flat-hover);
-    border-color: var(--storage-browser-primary-base);
-    color: var(--storage-browser-primary-base);
-}
-
-.storage-browser-preview-download:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
-}
-
-.storage-browser-preview-close {
-    background: transparent;
-    border: 1px solid var(--storage-browser-border);
-    color: var(--storage-browser-text-dimmed);
-    cursor: pointer;
-    padding: var(--storage-browser-spacing-sm);
-    border-radius: var(--storage-browser-radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--storage-browser-transition-fast);
-}
-
-.storage-browser-preview-close:hover {
-    background: var(--storage-browser-default-flat-hover);
-    border-color: var(--storage-browser-danger-base);
-    color: var(--storage-browser-danger-base);
-}
-
-.storage-browser-preview-close:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
-}
-
 /* Action Buttons (Create Folder, Upload) */
 .storage-browser-btn-primary:disabled {
     opacity: 0.4;
@@ -990,6 +868,128 @@ storage-file-browser * {
 }
 
 .storage-browser-btn-danger:focus-visible {
+    outline: 2px solid var(--storage-browser-primary-vibrant);
+    outline-offset: 2px;
+}
+
+/* Preview Dialog */
+.storage-browser-preview-dialog {
+    max-width: 95vw;
+    max-height: 95vh;
+    width: 1400px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.storage-browser-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--storage-browser-spacing-lg) var(--storage-browser-spacing-xl);
+    border-bottom: 1px solid var(--storage-browser-border);
+    background: var(--storage-browser-bg-step-1);
+    flex-shrink: 0;
+}
+
+.storage-browser-preview-actions {
+    display: flex;
+    gap: var(--storage-browser-spacing-sm);
+    align-items: center;
+}
+
+.storage-browser-preview-content {
+    padding: 0;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: var(--storage-browser-bg-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.storage-browser-preview-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--storage-browser-spacing-md);
+    color: var(--storage-browser-text-dimmed);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.storage-browser-preview-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--storage-browser-danger-base);
+    padding: var(--storage-browser-spacing-xl);
+    text-align: center;
+}
+
+.storage-browser-preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--storage-browser-white);
+}
+
+.storage-browser-preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.storage-browser-preview-download {
+    background: transparent;
+    border: 1px solid var(--storage-browser-border);
+    color: var(--storage-browser-text-dimmed);
+    cursor: pointer;
+    padding: var(--storage-browser-spacing-sm);
+    border-radius: var(--storage-browser-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--storage-browser-transition-fast);
+    text-decoration: none;
+}
+
+.storage-browser-preview-download:hover {
+    background: var(--storage-browser-default-flat-hover);
+    border-color: var(--storage-browser-primary-base);
+    color: var(--storage-browser-primary-base);
+}
+
+.storage-browser-preview-download:focus-visible {
+    outline: 2px solid var(--storage-browser-primary-vibrant);
+    outline-offset: 2px;
+}
+
+.storage-browser-preview-close {
+    background: transparent;
+    border: 1px solid var(--storage-browser-border);
+    color: var(--storage-browser-text-dimmed);
+    cursor: pointer;
+    padding: var(--storage-browser-spacing-sm);
+    border-radius: var(--storage-browser-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--storage-browser-transition-fast);
+}
+
+.storage-browser-preview-close:hover {
+    background: var(--storage-browser-default-flat-hover);
+    border-color: var(--storage-browser-danger-base);
+    color: var(--storage-browser-danger-base);
+}
+
+.storage-browser-preview-close:focus-visible {
     outline: 2px solid var(--storage-browser-primary-vibrant);
     outline-offset: 2px;
 }
