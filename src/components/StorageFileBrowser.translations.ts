@@ -1,7 +1,5 @@
-
-
 /**
- * Translation dictionary
+ * Translation dictionary for StorageFileBrowser component
  */
 export const translations = {
     en: {
