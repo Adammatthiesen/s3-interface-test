@@ -57,29 +57,29 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
     }
 
     getPOST(type?: AuthorizationType): StorageAPIEndpointFn<C, R> {
-        return this.driver.buildPostEndpoint(async ({ getJson, isAuthorized }) => {
-            const { action, key, contentType, prefix, identifier, newKey } = await getJson();
+        return this.driver.handleEndpoint(async ({ getJson, isAuthorized }) => {
+            const jsonBody = await getJson();
 
             // Cases when authorization is required
             const authRequiredActions = ['upload', 'delete', 'rename', 'cleanup', 'mappings', 'test', 'list'];
-            if (authRequiredActions.includes(action) && !isAuthorized(type)) {
+            if (authRequiredActions.includes(jsonBody.action) && !isAuthorized(type)) {
                 return { data: { error: 'Unauthorized' }, status: 401 };
             }
 
-            switch (action) {
+            switch (jsonBody.action) {
                 case 'resolveUrl': {
                     const metadata = await this.urlMappingService.resolve(
-                        identifier,
+                        jsonBody.identifier,
                         generateUrlMetadata,
                     );
                     return { data: metadata, status: 200 };
                 }
 
                 case 'publicUrl': {
-                    const metadata = await generateUrlMetadata(key);
+                    const metadata = await generateUrlMetadata(jsonBody.key);
 
                     // Optionally register the mapping
-                    const mappingIdentifier = this.urlMappingService.createIdentifier(key);
+                    const mappingIdentifier = this.urlMappingService.createIdentifier(jsonBody.key);
                     await this.urlMappingService.register(mappingIdentifier, metadata);
 
                     return {
@@ -94,17 +94,17 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
                     // Generate presigned URL for upload
                     const command = new PutObjectCommand({
                         Bucket: BUCKET_NAME,
-                        Key: key,
-                        ContentType: contentType,
+                        Key: jsonBody.key,
+                        ContentType: jsonBody.contentType,
                     });
                     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-                    return { data: { url, key }, status: 200 };
+                    return { data: { url, key: jsonBody.key }, status: 200 };
                 }
 
                 case 'list': {
                     const command = new ListObjectsV2Command({
                         Bucket: BUCKET_NAME,
-                        Prefix: prefix || key || '',
+                        Prefix: jsonBody.prefix || jsonBody.key || '',
                     });
                     const response = await s3Client.send(command);
                     const files = response.Contents?.map(item => ({
@@ -118,54 +118,54 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
                 case 'delete': {
                     const command = new DeleteObjectCommand({
                         Bucket: BUCKET_NAME,
-                        Key: key,
+                        Key: jsonBody.key,
                     });
                     await s3Client.send(command);
 
                     // Also delete from URL mapping
-                    const mappingIdentifier = this.urlMappingService.createIdentifier(key);
+                    const mappingIdentifier = this.urlMappingService.createIdentifier(jsonBody.key);
                     await this.urlMappingService.delete(mappingIdentifier);
 
                     return { data: { success: true }, status: 200 };
                 }
 
                 case 'rename': {
-                    if (!newKey) {
+                    if (!jsonBody.newKey) {
                         return { data: { error: 'newKey is required for rename action' }, status: 400 };
                     }
 
                     // Copy the object to the new key
                     const copyCommand = new CopyObjectCommand({
                         Bucket: BUCKET_NAME,
-                        CopySource: `${BUCKET_NAME}/${key}`,
-                        Key: newKey,
+                        CopySource: `${BUCKET_NAME}/${jsonBody.key}`,
+                        Key: jsonBody.newKey,
                     });
                     await s3Client.send(copyCommand);
 
                     // Delete the old object
                     const deleteCommand = new DeleteObjectCommand({
                         Bucket: BUCKET_NAME,
-                        Key: key,
+                        Key: jsonBody.key,
                     });
                     await s3Client.send(deleteCommand);
 
                     // Update URL mappings
-                    const oldMappingIdentifier = this.urlMappingService.createIdentifier(key);
+                    const oldMappingIdentifier = this.urlMappingService.createIdentifier(jsonBody.key);
                     await this.urlMappingService.delete(oldMappingIdentifier);
 
                     // Create new mapping for the renamed file
-                    const newMappingIdentifier = this.urlMappingService.createIdentifier(newKey);
-                    const urlMetadata = await generateUrlMetadata(newKey);
+                    const newMappingIdentifier = this.urlMappingService.createIdentifier(jsonBody.newKey);
+                    const urlMetadata = await generateUrlMetadata(jsonBody.newKey);
                     await this.urlMappingService.register(newMappingIdentifier, urlMetadata);
 
-                    return { data: { success: true, newKey }, status: 200 };
+                    return { data: { success: true, newKey: jsonBody.newKey }, status: 200 };
                 }
 
                 case 'download': {
                     // Generate presigned URL for download
                     const command = new GetObjectCommand({
                         Bucket: BUCKET_NAME,
-                        Key: key,
+                        Key: jsonBody.key,
                     });
                     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
                     return { data: { url }, status: 200 };
@@ -217,7 +217,7 @@ export class S3ApiService<C extends unknown, R extends unknown> implements Stora
     }
 
     getPUT(type?: AuthorizationType): StorageAPIEndpointFn<C, R> {
-        return this.driver.buildPutEndpoint(async ({ getArrayBuffer, getHeader, isAuthorized }) => {
+        return this.driver.handleEndpoint(async ({ getArrayBuffer, getHeader, isAuthorized }) => {
 
             if (!isAuthorized(type)) {
                 return { data: { error: 'Unauthorized' }, status: 401 };

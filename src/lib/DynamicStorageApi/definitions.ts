@@ -1,7 +1,68 @@
 export type AuthorizationType = 'locals' | 'headers';
 
+type ContextBodyResolveUrl = {
+    action: 'resolveUrl';
+    identifier: string;
+}
+
+type ContextBodyPublicUrl = {
+    action: 'publicUrl';
+    key: string;
+}
+
+type ContextBodyUpload = {
+    action: 'upload';
+    key: string;
+    contentType: string;
+}
+
+type ContextBodyDelete = {
+    action: 'delete';
+    key: string;
+}
+
+type ContextBodyRename = {
+    action: 'rename';
+    key: string;
+    newKey: string;
+}
+
+type ContextBodyCleanup = {
+    action: 'cleanup';
+}
+
+type ContextBodyMappings = {
+    action: 'mappings';
+}
+
+type ContextBodyTest = {
+    action: 'test';
+}
+
+type ContextBodyList = {
+    action: 'list';
+    prefix?: string;
+    key?: string;
+}
+
+type ContextBodyDownload = {
+    action: 'download';
+    key: string;
+}
+
+export type ContextJsonBody = ContextBodyResolveUrl
+    | ContextBodyPublicUrl
+    | ContextBodyUpload
+    | ContextBodyDelete
+    | ContextBodyRename
+    | ContextBodyCleanup
+    | ContextBodyMappings
+    | ContextBodyTest
+    | ContextBodyList
+    | ContextBodyDownload;
+
 export type ParsedContext = {
-    getJson: () => Promise<any>;
+    getJson: () => Promise<ContextJsonBody>;
     getArrayBuffer: () => Promise<ArrayBuffer>;
     getHeader: (name: string) => string | null;
     isAuthorized: (type?: AuthorizationType) => boolean;
@@ -24,14 +85,9 @@ export type ContextHandler = (context: ParsedContext) => Promise<{ data: unknown
 export type ContextHandlerFn<C extends unknown, R extends unknown> = (context: C) => Promise<R>;
 
 export interface ContextDriverDefinition<C extends unknown, R extends unknown> {
-    // parsers
     parseContext: (context: C) => ParsedContext;
-
     buildResponse: <D>(opts: { data: D, status: number }) => R;
-
-    buildPostEndpoint(contextHandler: ContextHandler): ContextHandlerFn<C, R>;
-
-    buildPutEndpoint(contextHandler: ContextHandler): ContextHandlerFn<C, R>;
+    handleEndpoint(contextHandler: ContextHandler): ContextHandlerFn<C, R>;
 }
 
 export type StorageAPIEndpointFn<C extends unknown, R extends unknown> = (context: C) => Promise<R>;

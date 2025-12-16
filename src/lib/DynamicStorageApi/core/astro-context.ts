@@ -37,7 +37,7 @@ export class AstroContextDriver implements ContextDriverDefinition<APIContext, R
         return { data: { error: (error as Error).message }, status: 500 };
     }
 
-    handleEndpoint(contextHandler: ContextHandler) {
+    handleEndpoint(contextHandler: ContextHandler): ContextHandlerFn<APIContext, Response> {
         return async (rawContext: APIContext): Promise<Response> => {
             try {
                 const context = this.parseContext(rawContext);
@@ -48,13 +48,5 @@ export class AstroContextDriver implements ContextDriverDefinition<APIContext, R
                 return this.buildResponse(errorResponse);
             }
         }
-    }
-
-    buildPostEndpoint(contextHandler: ContextHandler): ContextHandlerFn<APIContext, Response> {
-        return this.handleEndpoint(contextHandler);
-    }
-
-    buildPutEndpoint(contextHandler: ContextHandler): ContextHandlerFn<APIContext, Response> {
-        return this.handleEndpoint(contextHandler);
     }
 }
