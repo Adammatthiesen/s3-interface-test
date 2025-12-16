@@ -30,6 +30,8 @@ interface Props {
   returnType?: 'url' | 'identifier' | 'key';
   /** API endpoint for S3 operations */
   apiEndpoint?: string;
+  /** Locale storage key */
+  localeStorageKey?: string;
 }
 
 const { 
@@ -39,6 +41,7 @@ const {
   filesOnly = false,
   returnType = 'url',
   apiEndpoint = '/api/storage',
+  localeStorageKey = 'storage-browser:locale',
 } = Astro.props;
 
 // Convert fileTypes array to JSON string for the custom element
@@ -53,6 +56,7 @@ const fileTypesJson = JSON.stringify(fileTypes);
   return-type={returnType}
   api-endpoint={apiEndpoint}
   translation-map={JSON.stringify(translations)}
+  locale-storage-key={localeStorageKey}
 ></storage-file-browser>
 
 <script src="./StorageFileBrowser.ts"></script>
