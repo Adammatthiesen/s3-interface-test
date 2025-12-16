@@ -26,38 +26,3 @@ export function changeLocale(locale?: string): void {
     });
     window.dispatchEvent(event);
 }
-
-/**
- * Gets the current locale from the document's lang attribute or defaults to 'en'
- * 
- * @returns The current locale code
- * 
- * @example
- * ```ts
- * import { getCurrentLocale } from 'src/utils/locale';
- * 
- * const currentLocale = getCurrentLocale();
- * console.log(currentLocale); // 'en'
- * ```
- */
-export function getCurrentLocale(): string {
-    return document.documentElement.lang || 'en';
-}
-
-/**
- * Sets the document's lang attribute and dispatches a locale-change event
- * 
- * @param locale - The new locale code
- * 
- * @example
- * ```ts
- * import { setDocumentLocale } from 'src/utils/locale';
- * 
- * // Set document locale and update all StorageFileBrowser instances
- * setDocumentLocale('es');
- * ```
- */
-export function setDocumentLocale(locale: string): void {
-    document.documentElement.lang = locale;
-    changeLocale(locale);
-}
