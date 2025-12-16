@@ -127,16 +127,21 @@ class StorageFileBrowser extends HTMLElement {
     private fileToDelete: StorageFile | null = null;
     private fileToRename: StorageFile | null = null;
     private connectionEstablished: boolean = false;
-    private currentLocale: string = 'en';
+    private currentLocale!: string;
     private translations!: TranslationStrings;
     private translationMap!: Record<string, TranslationStrings>;
+    private localI18nStorageKey: string = 'storage-browser:locale';
 
     constructor() {
         super();
 
         // Listen for locale change events
         window.addEventListener('storage-browser:locale-change', ((e: CustomEvent) => {
-            this.setLocale(e.detail.locale);
+            if (e.detail.locale) {
+                this.setLocale(e.detail.locale);
+            } else {
+                this.updateLocale()
+            }
         }) as EventListener);
     }
 
@@ -147,6 +152,7 @@ class StorageFileBrowser extends HTMLElement {
         if (this.translationMap[locale]) {
             this.currentLocale = locale;
             this.translations = this.translationMap[locale];
+            localStorage.setItem(this.localI18nStorageKey, locale);
             // Re-render if component is already connected
             if (this.isConnected) {
                 this.render();
@@ -159,6 +165,15 @@ class StorageFileBrowser extends HTMLElement {
         }
     }
 
+    private updateLocale() {
+        let savedLocale = localStorage.getItem(this.localI18nStorageKey);
+        if (!savedLocale) {
+            savedLocale = 'en';
+            console.warn(`No saved locale found, using fallback lang "${savedLocale}"`);
+        }
+        this.setLocale(savedLocale);
+    }
+
     /**
      * Get translation for a key
      */
@@ -167,11 +182,16 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     connectedCallback(): void {
-        // TODO Implement nanostore based translation import once imported into StudioCMS
         // Setup Translations
         const translationMapAttr = this.getAttribute('translation-map');
         this.translationMap = JSON.parse(translationMapAttr || '{}');
         this.translations = this.translationMap[this.currentLocale] || this.translationMap['en'];
+
+        const localeStorageKey = this.getAttribute('locale-storage-key') || 'storage-browser:locale';
+        this.localI18nStorageKey = localeStorageKey;
+
+        const savedLocale = localStorage.getItem(this.localI18nStorageKey);
+        this.setLocale(savedLocale || 'en');
 
         // Get attributes
         this.triggerId = this.getAttribute('trigger-id') || '';
@@ -183,9 +203,6 @@ class StorageFileBrowser extends HTMLElement {
         this.returnType = (this.getAttribute('return-type') as StorageReturnType) || 'url';
         this.apiEndpoint = this.getAttribute('api-endpoint') || '/api/storage';
 
-        // Get initial locale from attribute or default to 'en'
-        const initialLocale = this.getAttribute('locale') || 'en';
-        this.setLocale(initialLocale);
 
         // Generate unique IDs
         this.modalId = `storage-browser-${this.triggerId}`;

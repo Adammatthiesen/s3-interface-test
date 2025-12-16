@@ -108,6 +108,11 @@ import '../styles.css';
     <div class="demo-section">
       <h2>StorageFileBrowser File Browser Component Demo</h2>
       <p style="color: #6c757d;">Click the "Browse" buttons to open the file browser and select files from your storage.</p>
+
+      <div style="margin-top: 2rem;">
+        <button id="locale-en-btn" class="browse-btn">Set Locale: English</button>
+        <button id="locale-es-btn" class="browse-btn">Set Locale: Spanish</button>
+      </div>
     </div>
 
     <div class="demo-section">
@@ -278,9 +283,13 @@ import '../styles.css';
   />
 
   <script>
+    import { changeLocale } from '../utils/locale.ts';
+
     // Preview image when identifier changes
     const imageIdentifierInput = document.getElementById('image-identifier') as HTMLInputElement;
     const imagePreview = document.getElementById('image-preview') as HTMLElement;
+    const localeEnBtn = document.getElementById('locale-en-btn') as HTMLButtonElement;
+    const localeEsBtn = document.getElementById('locale-es-btn') as HTMLButtonElement;
 
     imageIdentifierInput?.addEventListener('change', async () => {
       const identifier = imageIdentifierInput.value;
@@ -306,6 +315,15 @@ import '../styles.css';
         imagePreview.classList.remove('empty');
       }
     });
+
+    localeEnBtn?.addEventListener('click', () => {
+      changeLocale('en');
+    });
+
+    localeEsBtn?.addEventListener('click', () => {
+      changeLocale('es');
+    });
+
   </script>
 </body>
 </html>

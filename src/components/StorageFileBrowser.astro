@@ -30,8 +30,6 @@ interface Props {
   returnType?: 'url' | 'identifier' | 'key';
   /** API endpoint for S3 operations */
   apiEndpoint?: string;
-  /** Translation/Locale Settings */
-  locale?: string
 }
 
 const { 
@@ -41,7 +39,6 @@ const {
   filesOnly = false,
   returnType = 'url',
   apiEndpoint = '/api/storage',
-  locale = 'en'
 } = Astro.props;
 
 // Convert fileTypes array to JSON string for the custom element
@@ -55,7 +52,6 @@ const fileTypesJson = JSON.stringify(fileTypes);
   files-only={filesOnly.toString()}
   return-type={returnType}
   api-endpoint={apiEndpoint}
-  locale={locale}
   translation-map={JSON.stringify(translations)}
 ></storage-file-browser>
 

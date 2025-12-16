@@ -9,7 +9,7 @@
  * 
  * @example
  * ```ts
- * import { changeLocale } from '@/utils/locale';
+ * import { changeLocale } from 'src/utils/locale';
  * 
  * // Change locale to Spanish
  * changeLocale('es');
@@ -18,7 +18,7 @@
  * changeLocale('fr');
  * ```
  */
-export function changeLocale(locale: string): void {
+export function changeLocale(locale?: string): void {
     const event = new CustomEvent('storage-browser:locale-change', {
         detail: { locale },
         bubbles: true,
@@ -34,7 +34,7 @@ export function changeLocale(locale: string): void {
  * 
  * @example
  * ```ts
- * import { getCurrentLocale } from '@/utils/locale';
+ * import { getCurrentLocale } from 'src/utils/locale';
  * 
  * const currentLocale = getCurrentLocale();
  * console.log(currentLocale); // 'en'
@@ -51,7 +51,7 @@ export function getCurrentLocale(): string {
  * 
  * @example
  * ```ts
- * import { setDocumentLocale } from '@/utils/locale';
+ * import { setDocumentLocale } from 'src/utils/locale';
  * 
  * // Set document locale and update all StorageFileBrowser instances
  * setDocumentLocale('es');
