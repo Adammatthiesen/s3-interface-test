@@ -185,7 +185,7 @@ but with default fallbacks to ensure proper theming even if those variables are 
 }
 
 storage-file-browser {
-    font-family: var(--scms-font-onest), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--scms-font-onest, -apple-system), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 storage-file-browser * {
@@ -207,11 +207,11 @@ storage-file-browser * {
     opacity: 0;
     transition: opacity 0.25s, display 0.25s;
     transition-behavior: allow-discrete;
-}
 
-.storage-browser-modal.open {
-    display: flex;
-    opacity: 1;
+    &.open {
+        display: flex;
+        opacity: 1;
+    }
 }
 
 @starting-style {
@@ -280,16 +280,16 @@ storage-file-browser * {
     justify-content: center;
     border-radius: var(--storage-browser-radius-sm);
     transition: all var(--storage-browser-transition-normal);
-}
 
-.storage-browser-close:hover {
-    color: var(--storage-browser-text-normal);
-    background: var(--storage-browser-default-flat-hover);
-}
+    &:hover {
+        color: var(--storage-browser-text-normal);
+        background: var(--storage-browser-default-flat-hover);
+    }
 
-.storage-browser-close:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+    }
 }
 
 .storage-browser-toolbar {
@@ -329,25 +329,25 @@ storage-file-browser * {
     padding: var(--storage-browser-spacing-xs) var(--storage-browser-spacing-sm);
     border-radius: var(--storage-browser-radius-sm);
     transition: all var(--storage-browser-transition-normal);
-}
 
-.storage-browser-crumb:hover {
-    background: var(--storage-browser-primary-flat-hover);
-    color: var(--storage-browser-primary-vibrant);
-}
+    &:hover {
+        background: var(--storage-browser-primary-flat-hover);
+        color: var(--storage-browser-primary-vibrant);
+    }
 
-.storage-browser-crumb:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+    }
 }
 
 .storage-browser-crumb.active {
     color: var(--storage-browser-text-dimmed);
     cursor: default;
-}
 
-.storage-browser-crumb.active:hover {
-    background: transparent;
+    &:hover {
+        background: transparent;
+    }
 }
 
 .storage-browser-separator {
@@ -370,23 +370,23 @@ storage-file-browser * {
     background: var(--storage-browser-primary-flat);
     border: 2px dashed var(--storage-browser-primary-base);
     border-radius: var(--storage-browser-radius-md);
-}
 
-.storage-browser-content.storage-browser-drag-over::before {
-    content: 'Drop files here to upload';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--storage-browser-primary-base);
-    font-size: var(--storage-browser-text-lg);
-    font-weight: 600;
-    pointer-events: none;
-    z-index: 100;
-    background: var(--storage-browser-bg-step-2);
-    padding: var(--storage-browser-spacing-xl) var(--storage-browser-spacing-2xl);
-    border-radius: var(--storage-browser-radius-md);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    &::before {
+        content: 'Drop files here to upload';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: var(--storage-browser-primary-base);
+        font-size: var(--storage-browser-text-lg);
+        font-weight: 600;
+        pointer-events: none;
+        z-index: 100;
+        background: var(--storage-browser-bg-step-2);
+        padding: var(--storage-browser-spacing-xl) var(--storage-browser-spacing-2xl);
+        border-radius: var(--storage-browser-radius-md);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
 }
 
 .storage-browser-grid {
@@ -406,17 +406,17 @@ storage-file-browser * {
     transition: all var(--storage-browser-transition-fast);
     min-height: 110px;
     background: var(--storage-browser-bg-step-2);
-}
 
-.storage-browser-item:hover {
-    border-color: var(--storage-browser-primary-base);
-    background: var(--storage-browser-bg-step-3);
-}
+    &:hover {
+        border-color: var(--storage-browser-primary-base);
+        background: var(--storage-browser-bg-step-3);
+    }
 
-.storage-browser-item:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
-    border-color: var(--storage-browser-primary-base);
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+        border-color: var(--storage-browser-primary-base);
+    }
 }
 
 .storage-browser-file.selected {
@@ -427,11 +427,11 @@ storage-file-browser * {
 .storage-browser-folder {
     border-color: var(--storage-browser-border);
     background: var(--storage-browser-bg-step-2);
-}
 
-.storage-browser-folder:hover {
-    border-color: var(--storage-browser-primary-base);
-    background: var(--storage-browser-bg-step-3);
+    &:hover {
+        border-color: var(--storage-browser-primary-base);
+        background: var(--storage-browser-bg-step-3);
+    }
 }
 
 .storage-browser-icon {
@@ -439,11 +439,11 @@ storage-file-browser * {
     height: 36px;
     color: var(--storage-browser-primary-base);
     margin-bottom: var(--storage-browser-spacing-md);
-}
 
-.storage-browser-icon svg {
-    width: 100%;
-    height: 100%;
+    & svg {
+        width: 100%;
+        height: 100%;
+    }
 }
 
 .storage-browser-name {
@@ -537,10 +537,10 @@ storage-file-browser * {
 .storage-browser-selected {
     font-size: var(--storage-browser-text-base);
     color: var(--storage-browser-text-muted);
-}
 
-.storage-browser-selected strong {
-    color: var(--storage-browser-text-dimmed);
+    & strong {
+        color: var(--storage-browser-text-dimmed);
+    }
 }
 
 .storage-browser-actions {
@@ -561,11 +561,16 @@ storage-file-browser * {
     font-size: var(--storage-browser-text-base);
     background: var(--storage-browser-border);
     color: var(--storage-browser-text-dimmed);
-}
 
-.storage-browser-btn:hover {
-    background: var(--storage-browser-default-hover);
-    border-color: var(--storage-browser-border);
+    &:hover {
+        background: var(--storage-browser-default-hover);
+        border-color: var(--storage-browser-border);
+    }
+
+    & svg {
+        width: 14px;
+        height: 14px;
+    }
 }
 
 .storage-browser-btn-small {
@@ -578,22 +583,17 @@ storage-file-browser * {
     background: var(--storage-browser-primary-base);
     color: var(--storage-browser-text-inverted);
     border-color: var(--storage-browser-primary-base);
+
+    &:hover:not(:disabled) {
+        background: var(--storage-browser-primary-hover);
+    }
+
+    &:hover:disabled {
+        color: var(--storage-browser-text-normal);
+    }
 }
 
-.storage-browser-btn-primary:hover:not(:disabled) {
-    background: var(--storage-browser-primary-hover);
-}
-
-.storage-browser-btn-primary:hover:disabled {
-    color: var(--storage-browser-text-normal);
-}
-
-.storage-browser-btn-danger:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
-}
-
-/* Action Buttons (Create Folder, Upload) */
+/* Action Buttons (Create Folder, Upload) and Select Button */
 .storage-browser-btn:disabled,
 .storage-browser-btn-primary:disabled {
     opacity: 0.4;
@@ -604,21 +604,16 @@ storage-file-browser * {
     background: var(--storage-browser-border);
     color: var(--storage-browser-text-dimmed);
     border: 1px solid var(--storage-browser-border);
-}
 
-.storage-browser-btn-secondary:hover {
-    background: var(--storage-browser-default-hover);
-    border-color: var(--storage-browser-border);
-}
+    &:hover {
+        background: var(--storage-browser-default-hover);
+        border-color: var(--storage-browser-border);
+    }
 
-.storage-browser-btn-secondary:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
-}
-
-.storage-browser-btn svg {
-    width: 14px;
-    height: 14px;
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+    }
 }
 
 /* Upload Dialog */
@@ -704,12 +699,12 @@ storage-file-browser * {
     font-family: monospace;
     width: 100%;
     transition: all var(--storage-browser-transition-normal);
-}
 
-.storage-browser-filename-input:focus {
-    outline: none;
-    border-color: var(--storage-browser-primary-base);
-    background: var(--storage-browser-bg-step-1);
+    &:focus {
+        outline: none;
+        border-color: var(--storage-browser-primary-base);
+        background: var(--storage-browser-bg-step-1);
+    }
 }
 
 /* Folder name input styling */
@@ -722,16 +717,16 @@ storage-file-browser * {
     font-size: var(--storage-browser-text-base);
     width: 100%;
     transition: all var(--storage-browser-transition-normal);
-}
 
-.storage-browser-upload-filename:focus {
-    outline: none;
-    border-color: var(--storage-browser-primary-base);
-    background: var(--storage-browser-bg-step-1);
-}
+    &:focus {
+        outline: none;
+        border-color: var(--storage-browser-primary-base);
+        background: var(--storage-browser-bg-step-1);
+    }
 
-.storage-browser-upload-filename::placeholder {
-    color: var(--storage-browser-text-muted);
+    &::placeholder {
+        color: var(--storage-browser-text-muted);
+    }
 }
 
 .storage-browser-dialog-footer {
@@ -792,49 +787,49 @@ storage-file-browser * {
 /* Delete Button */
 .storage-browser-delete-btn {
     color: var(--storage-browser-danger-vibrant);
-}
 
-.storage-browser-delete-btn:hover {
-    background: var(--storage-browser-danger-flat-hover);
-    border-color: var(--storage-browser-danger-vibrant);
-    color: var(--storage-browser-danger-vibrant);
-}
+    &:hover {
+        background: var(--storage-browser-danger-flat-hover);
+        border-color: var(--storage-browser-danger-vibrant);
+        color: var(--storage-browser-danger-vibrant);
+    }
 
-.storage-browser-delete-btn:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+    }
 }
 
 /* Rename Button */
 .storage-browser-rename-btn {
     color: var(--storage-browser-info-vibrant);
-}
 
-.storage-browser-rename-btn:hover {
-    background: var(--storage-browser-info-flat-hover);
-    border-color: var(--storage-browser-info-vibrant);
-    color: var(--storage-browser-info-vibrant);
-}
+    &:hover {
+        background: var(--storage-browser-info-flat-hover);
+        border-color: var(--storage-browser-info-vibrant);
+        color: var(--storage-browser-info-vibrant);
+    }
 
-.storage-browser-rename-btn:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+    }
 }
 
 /* Preview Button */
 .storage-browser-preview-btn {
     color: var(--storage-browser-primary-base);
-}
 
-.storage-browser-preview-btn:hover {
-    background: var(--storage-browser-primary-flat-hover);
-    border-color: var(--storage-browser-primary-vibrant);
-    color: var(--storage-browser-primary-vibrant);
-}
+    &:hover {
+        background: var(--storage-browser-primary-flat-hover);
+        border-color: var(--storage-browser-primary-vibrant);
+        color: var(--storage-browser-primary-vibrant);
+    }
 
-.storage-browser-preview-btn:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+    }
 }
 
 .storage-browser-item {
@@ -879,16 +874,16 @@ storage-file-browser * {
     background: var(--storage-browser-danger-base);
     color: var(--storage-browser-white);
     border-color: var(--storage-browser-danger-base);
-}
 
-.storage-browser-btn-danger:hover {
-    background: var(--storage-browser-danger-hover);
-    border-color: var(--storage-browser-danger-hover);
-}
+    &:hover {
+        background: var(--storage-browser-danger-hover);
+        border-color: var(--storage-browser-danger-hover);
+    }
 
-.storage-browser-btn-danger:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+    }
 }
 
 /* Preview Dialog */
@@ -976,17 +971,17 @@ storage-file-browser * {
     justify-content: center;
     transition: all var(--storage-browser-transition-fast);
     text-decoration: none;
-}
 
-.storage-browser-preview-download:hover {
-    background: var(--storage-browser-default-flat-hover);
-    border-color: var(--storage-browser-primary-base);
-    color: var(--storage-browser-primary-base);
-}
+    &:hover {
+        background: var(--storage-browser-default-flat-hover);
+        border-color: var(--storage-browser-primary-base);
+        color: var(--storage-browser-primary-base);
+    }
 
-.storage-browser-preview-download:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+    }
 }
 
 .storage-browser-preview-close {
@@ -1000,17 +995,17 @@ storage-file-browser * {
     align-items: center;
     justify-content: center;
     transition: all var(--storage-browser-transition-fast);
-}
 
-.storage-browser-preview-close:hover {
-    background: var(--storage-browser-default-flat-hover);
-    border-color: var(--storage-browser-danger-base);
-    color: var(--storage-browser-danger-base);
-}
+    &:hover {
+        background: var(--storage-browser-default-flat-hover);
+        border-color: var(--storage-browser-danger-base);
+        color: var(--storage-browser-danger-base);
+    }
 
-.storage-browser-preview-close:focus-visible {
-    outline: 2px solid var(--storage-browser-primary-vibrant);
-    outline-offset: 2px;
+    &:focus-visible {
+        outline: 2px solid var(--storage-browser-primary-vibrant);
+        outline-offset: 2px;
+    }
 }
 
 /* ========================================
@@ -1310,13 +1305,10 @@ storage-file-browser * {
 
 /* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
-    * {
+    .storage-browser-modal * {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
-    }
-
-    .storage-browser-file-actions {
-        transition: none;
+        transition: none !important;
     }
 }
