@@ -379,7 +379,7 @@ class StorageFileBrowser extends HTMLElement {
 
         // Open modal
         trigger?.addEventListener('click', async () => {
-            modal.style.display = 'flex';
+            modal.classList.add('open');
 
             // Test connection first
             const connected = await this.testConnection();
@@ -407,8 +407,8 @@ class StorageFileBrowser extends HTMLElement {
 
         // Keyboard support for Escape key
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && modal.style.display === 'flex') {
-                modal.style.display = 'none';
+            if (e.key === 'Escape' && modal.classList.contains('open')) {
+                modal.classList.remove('open');
                 this.selectedFile = null;
                 this.updateSelectedInfo();
                 trigger?.focus(); // Return focus to trigger
@@ -419,7 +419,7 @@ class StorageFileBrowser extends HTMLElement {
         // Close modal handlers
         this.querySelectorAll<HTMLButtonElement>(`[data-close-modal="${this.modalId}"]`).forEach((btn) => {
             btn.addEventListener('click', () => {
-                modal.style.display = 'none';
+                modal.classList.remove('open');
                 this.selectedFile = null;
                 this.updateSelectedInfo();
             });
@@ -427,7 +427,7 @@ class StorageFileBrowser extends HTMLElement {
 
         // Close on overlay click
         this.querySelector('.storage-browser-overlay')?.addEventListener('click', () => {
-            modal.style.display = 'none';
+            modal.classList.remove('open');
             this.selectedFile = null;
             this.updateSelectedInfo();
         });

@@ -131,7 +131,7 @@ but with default fallbacks to ensure proper theming even if those variables are 
     --storage-browser-text-normal: var(--text-normal, hsl(0 0% 0%));
     --storage-browser-text-dimmed: var(--text-dimmed, hsl(0 0% 0% / 0.8));
     --storage-browser-text-muted: var(--text-muted, hsl(0 0% 0% / 0.75));
-    --storage-browser-text-inverted: var(--text-inverted, --storage-browser-white);
+    --storage-browser-text-inverted: var(--text-inverted, var(--storage-browser-white));
 
     /* Border & Shadow */
     --storage-browser-border: var(--border, hsl(263 5% 68%));
@@ -204,6 +204,20 @@ storage-file-browser * {
     height: 100%;
     align-items: center;
     justify-content: center;
+    opacity: 0;
+    transition: opacity 0.25s, display 0.25s;
+    transition-behavior: allow-discrete;
+}
+
+.storage-browser-modal.open {
+    display: flex;
+    opacity: 1;
+}
+
+@starting-style {
+    .storage-browser-modal.open {
+        opacity: 0;
+    }
 }
 
 .storage-browser-overlay {
@@ -562,12 +576,16 @@ storage-file-browser * {
 
 .storage-browser-btn-primary {
     background: var(--storage-browser-primary-base);
-    color: var(--storage-browser-white);
+    color: var(--storage-browser-text-inverted);
     border-color: var(--storage-browser-primary-base);
 }
 
 .storage-browser-btn-primary:hover:not(:disabled) {
     background: var(--storage-browser-primary-hover);
+}
+
+.storage-browser-btn-primary:hover:disabled {
+    color: var(--storage-browser-text-normal);
 }
 
 .storage-browser-btn-danger:focus-visible {
@@ -789,7 +807,7 @@ storage-file-browser * {
 
 /* Rename Button */
 .storage-browser-rename-btn {
-    color: var(--storage-browser-info-base);
+    color: var(--storage-browser-info-vibrant);
 }
 
 .storage-browser-rename-btn:hover {
