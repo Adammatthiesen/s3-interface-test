@@ -171,15 +171,15 @@ class StorageFileBrowser extends HTMLElement {
         return document.getElementById(elementId) as E | null;
     }
 
-    private getAttr<T extends never>(name: string): string | null;
-    private getAttr<T extends string>(name: string, defaultValue: T): T
+    private getAttr(name: string): string | null;
+    private getAttr(name: string, defaultValue: string): string
 
     /**
      * Get attribute with optional default value
      * 
      * If the attribute is not set and no default value is provided, returns null
      */
-    private getAttr<T extends string>(name: string, defaultValue?: T): string | null | T {
+    private getAttr(name: string, defaultValue?: string): string | null {
         const fallback = defaultValue ?? null;
         return this.getAttribute(name) ?? fallback;
     }
@@ -241,8 +241,8 @@ class StorageFileBrowser extends HTMLElement {
         const fileTypesAttr = this.getAttr('file-types', '[]');
         this.fileTypes = JSON.parse(fileTypesAttr);
 
-        this.filesOnly = this.getAttr<string>('files-only', 'false') === 'true';
-        this.returnType = this.getAttr<StorageReturnType>('return-type', 'url');
+        this.filesOnly = this.getAttr('files-only', 'false') === 'true';
+        this.returnType = this.getAttr('return-type', 'url') as StorageReturnType;
         this.apiEndpoint = this.getAttr('api-endpoint', '/api/storage');
 
 
