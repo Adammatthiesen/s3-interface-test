@@ -132,7 +132,6 @@ class StorageFileBrowser extends HTMLElement {
     private translations!: TranslationStrings;
     private translationMap!: Record<string, TranslationStrings>;
     private localI18nStorageKey: string = 'storage-browser:locale';
-
     private connectionTestResponse = {
         status: 0,
         message: ''
@@ -149,6 +148,40 @@ class StorageFileBrowser extends HTMLElement {
                 this.updateLocale()
             }
         }) as EventListener);
+    }
+
+    /**
+     * Helper to select single element within shadow DOM
+     */
+    private $ = <E extends HTMLElement>(selectors: string): E | null => {
+        return this.querySelector<E>(selectors);
+    }
+
+    /**
+     * Helper to select multiple elements within shadow DOM
+     */
+    private $all = <E extends HTMLElement>(selectors: string): NodeListOf<E> => {
+        return this.querySelectorAll<E>(selectors);
+    }
+
+    /**
+     * Helper to select element by ID in the main document
+     */
+    private $$id = <E extends HTMLElement>(elementId: string): E | null => {
+        return document.getElementById(elementId) as E | null;
+    }
+
+    private getAttr<T extends never>(name: string): string | null;
+    private getAttr<T extends string>(name: string, defaultValue: T): T
+
+    /**
+     * Get attribute with optional default value
+     * 
+     * If the attribute is not set and no default value is provided, returns null
+     */
+    private getAttr<T extends string>(name: string, defaultValue?: T): string | null | T {
+        const fallback = defaultValue ?? null;
+        return this.getAttribute(name) ?? fallback;
     }
 
     /**
@@ -171,6 +204,9 @@ class StorageFileBrowser extends HTMLElement {
         }
     }
 
+    /**
+     * Update locale from localStorage or fallback to 'en'
+     */
     private updateLocale() {
         let savedLocale = localStorage.getItem(this.localI18nStorageKey);
         if (!savedLocale) {
@@ -189,25 +225,25 @@ class StorageFileBrowser extends HTMLElement {
 
     connectedCallback(): void {
         // Setup Translations
-        const translationMapAttr = this.getAttribute('translation-map');
-        this.translationMap = JSON.parse(translationMapAttr || '{}');
+        const translationMapAttr = this.getAttr<string>('translation-map', '{}');
+        this.translationMap = JSON.parse(translationMapAttr);
         this.translations = this.translationMap[this.currentLocale] || this.translationMap['en'];
 
-        const localeStorageKey = this.getAttribute('locale-storage-key') || 'storage-browser:locale';
+        const localeStorageKey = this.getAttr('locale-storage-key', 'storage-browser:locale');
         this.localI18nStorageKey = localeStorageKey;
 
         const savedLocale = localStorage.getItem(this.localI18nStorageKey);
         this.setLocale(savedLocale || 'en');
 
         // Get attributes
-        this.triggerId = this.getAttribute('trigger-id') || '';
-        this.targetInputId = this.getAttribute('target-input-id') || '';
-        const fileTypesAttr = this.getAttribute('file-types');
-        this.fileTypes = fileTypesAttr ? JSON.parse(fileTypesAttr) : [];
+        this.triggerId = this.getAttr('trigger-id', '');
+        this.targetInputId = this.getAttr('target-input-id', '');
+        const fileTypesAttr = this.getAttr<string>('file-types', '[]');
+        this.fileTypes = JSON.parse(fileTypesAttr);
 
-        this.filesOnly = this.getAttribute('files-only') === 'true';
-        this.returnType = (this.getAttribute('return-type') as StorageReturnType) || 'url';
-        this.apiEndpoint = this.getAttribute('api-endpoint') || '/api/storage';
+        this.filesOnly = this.getAttr<string>('files-only', 'false') === 'true';
+        this.returnType = this.getAttr<StorageReturnType>('return-type', 'url');
+        this.apiEndpoint = this.getAttr('api-endpoint', '/api/storage');
 
 
         // Generate unique IDs
@@ -219,6 +255,9 @@ class StorageFileBrowser extends HTMLElement {
         this.attachEventListeners();
     }
 
+    /**
+     * Render the component
+     */
     private render(): void {
         this.innerHTML = `
       <div id="${this.modalId}" class="storage-browser-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-${this.triggerId}">
@@ -384,19 +423,19 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private attachEventListeners(): void {
-        const modal = this.querySelector<HTMLDivElement>(`#${this.modalId}`);
-        const trigger = document.getElementById(this.triggerId);
-        const targetInput = document.getElementById(this.targetInputId) as HTMLInputElement | null;
-        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
-        const selectedInfo = this.querySelector<HTMLDivElement>(`#selected-${this.triggerId}`);
-        const selectBtn = this.querySelector<HTMLButtonElement>(`#select-btn-${this.triggerId}`);
-        const refreshBtn = this.querySelector<HTMLButtonElement>(`[data-refresh="${this.triggerId}"]`);
-        const uploadBtn = this.querySelector<HTMLButtonElement>(`[data-upload="${this.triggerId}"]`);
-        const uploadInput = this.querySelector<HTMLInputElement>(`#upload-input-${this.triggerId}`);
+        const modal = this.$<HTMLDivElement>(`#${this.modalId}`);
+        const trigger = this.$$id<HTMLButtonElement>(this.triggerId);
+        const targetInput = this.$$id<HTMLInputElement>(this.targetInputId);
+        const content = this.$<HTMLDivElement>(`#${this.contentId}`);
+        const selectedInfo = this.$<HTMLDivElement>(`#selected-${this.triggerId}`);
+        const selectBtn = this.$<HTMLButtonElement>(`#select-btn-${this.triggerId}`);
+        const refreshBtn = this.$<HTMLButtonElement>(`[data-refresh="${this.triggerId}"]`);
+        const uploadBtn = this.$<HTMLButtonElement>(`[data-upload="${this.triggerId}"]`);
+        const uploadInput = this.$<HTMLInputElement>(`#upload-input-${this.triggerId}`);
 
-        if (!modal || !content || !selectedInfo || !selectBtn) return;
+        if (!modal || !content || !selectedInfo || !selectBtn || !trigger) return;
 
-        this.onloadTest(trigger as HTMLButtonElement);
+        this.onloadTest(trigger);
 
         // Open modal
         trigger?.addEventListener('click', async () => {
@@ -408,20 +447,20 @@ class StorageFileBrowser extends HTMLElement {
                 // Disable action buttons if connection fails
                 if (uploadBtn) uploadBtn.disabled = true;
                 if (refreshBtn) refreshBtn.disabled = true;
-                const createFolderBtn = this.querySelector<HTMLButtonElement>(`[data-create-folder="${this.triggerId}"]`);
+                const createFolderBtn = this.$<HTMLButtonElement>(`[data-create-folder="${this.triggerId}"]`);
                 if (createFolderBtn) createFolderBtn.disabled = true;
             } else {
                 // Enable buttons if connection succeeds
                 if (uploadBtn) uploadBtn.disabled = false;
                 if (refreshBtn) refreshBtn.disabled = false;
-                const createFolderBtn = this.querySelector<HTMLButtonElement>(`[data-create-folder="${this.triggerId}"]`);
+                const createFolderBtn = this.$<HTMLButtonElement>(`[data-create-folder="${this.triggerId}"]`);
                 if (createFolderBtn) createFolderBtn.disabled = false;
                 this.loadFiles();
             }
 
             // Focus the close button for accessibility
             setTimeout(() => {
-                const closeBtn = this.querySelector<HTMLButtonElement>('.storage-browser-close');
+                const closeBtn = this.$<HTMLButtonElement>('.storage-browser-close');
                 closeBtn?.focus();
             }, 100);
         });
@@ -438,7 +477,7 @@ class StorageFileBrowser extends HTMLElement {
         document.addEventListener('keydown', handleKeyDown);
 
         // Close modal handlers
-        this.querySelectorAll<HTMLButtonElement>(`[data-close-modal="${this.modalId}"]`).forEach((btn) => {
+        this.$all<HTMLButtonElement>(`[data-close-modal="${this.modalId}"]`).forEach((btn) => {
             btn.addEventListener('click', () => {
                 modal.classList.remove('open');
                 this.selectedFile = null;
@@ -447,7 +486,7 @@ class StorageFileBrowser extends HTMLElement {
         });
 
         // Close on overlay click
-        this.querySelector('.storage-browser-overlay')?.addEventListener('click', () => {
+        this.$('.storage-browser-overlay')?.addEventListener('click', () => {
             modal.classList.remove('open');
             this.selectedFile = null;
             this.updateSelectedInfo();
@@ -462,14 +501,14 @@ class StorageFileBrowser extends HTMLElement {
         });
 
         // Create folder button
-        const createFolderBtn = this.querySelector<HTMLButtonElement>(`[data-create-folder="${this.triggerId}"]`);
+        const createFolderBtn = this.$<HTMLButtonElement>(`[data-create-folder="${this.triggerId}"]`);
         createFolderBtn?.addEventListener('click', () => this.showCreateFolderDialog());
 
         // Folder dialog handlers
-        const folderDialog = this.querySelector<HTMLDivElement>(`#folder-dialog-${this.triggerId}`);
-        const folderCancelBtn = this.querySelector(`#folder-dialog-cancel-${this.triggerId}`);
-        const folderConfirmBtn = this.querySelector(`#folder-dialog-confirm-${this.triggerId}`);
-        const folderNameInput = this.querySelector<HTMLInputElement>(`#folder-name-input-${this.triggerId}`);
+        const folderDialog = this.$<HTMLDivElement>(`#folder-dialog-${this.triggerId}`);
+        const folderCancelBtn = this.$(`#folder-dialog-cancel-${this.triggerId}`);
+        const folderConfirmBtn = this.$(`#folder-dialog-confirm-${this.triggerId}`);
+        const folderNameInput = this.$<HTMLInputElement>(`#folder-name-input-${this.triggerId}`);
 
         if (folderDialog && folderCancelBtn && folderConfirmBtn && folderNameInput) {
             folderCancelBtn.addEventListener('click', () => {
@@ -572,7 +611,7 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private async testConnection(): Promise<boolean> {
-        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        const content = this.$<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return false;
 
         content.innerHTML = `<div class="storage-browser-loading" role="status">${this.t('testingConnection')}</div>`;
@@ -650,7 +689,7 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private async loadFiles(): Promise<void> {
-        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        const content = this.$<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;
 
         content.innerHTML = `<div class="storage-browser-loading">${this.t('loadingFiles')}</div>`;
@@ -892,7 +931,7 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private updateBreadcrumb(): void {
-        const breadcrumb = this.querySelector<HTMLDivElement>(`#breadcrumb-${this.triggerId}`);
+        const breadcrumb = this.$<HTMLDivElement>(`#breadcrumb-${this.triggerId}`);
         if (!breadcrumb) return;
 
         if (!this.currentPath) {
@@ -944,8 +983,8 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private updateSelectedInfo(): void {
-        const selectedInfo = this.querySelector<HTMLDivElement>(`#selected-${this.triggerId}`);
-        const selectBtn = this.querySelector<HTMLButtonElement>(`#select-btn-${this.triggerId}`);
+        const selectedInfo = this.$<HTMLDivElement>(`#selected-${this.triggerId}`);
+        const selectBtn = this.$<HTMLButtonElement>(`#select-btn-${this.triggerId}`);
 
         if (!selectedInfo || !selectBtn) return;
 
@@ -1097,10 +1136,10 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private showUploadDialog(): void {
-        const dialog = this.querySelector<HTMLDivElement>(`#upload-dialog-${this.triggerId}`);
-        const dialogContent = this.querySelector<HTMLDivElement>(`#upload-dialog-content-${this.triggerId}`);
-        const cancelBtn = this.querySelector<HTMLButtonElement>(`#upload-dialog-cancel-${this.triggerId}`);
-        const confirmBtn = this.querySelector<HTMLButtonElement>(`#upload-dialog-confirm-${this.triggerId}`);
+        const dialog = this.$<HTMLDivElement>(`#upload-dialog-${this.triggerId}`);
+        const dialogContent = this.$<HTMLDivElement>(`#upload-dialog-content-${this.triggerId}`);
+        const cancelBtn = this.$<HTMLButtonElement>(`#upload-dialog-cancel-${this.triggerId}`);
+        const confirmBtn = this.$<HTMLButtonElement>(`#upload-dialog-confirm-${this.triggerId}`);
 
         if (!dialog || !dialogContent) return;
 
@@ -1172,10 +1211,10 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private showDeleteFolderConfirmation(folderName: string): void {
-        const dialog = this.querySelector<HTMLDivElement>(`#delete-dialog-${this.triggerId}`);
+        const dialog = this.$<HTMLDivElement>(`#delete-dialog-${this.triggerId}`);
         const filenameEl = dialog?.querySelector<HTMLParagraphElement>('.storage-browser-delete-filename');
-        const cancelBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-cancel-${this.triggerId}`);
-        const confirmBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-confirm-${this.triggerId}`);
+        const cancelBtn = this.$<HTMLButtonElement>(`#delete-dialog-cancel-${this.triggerId}`);
+        const confirmBtn = this.$<HTMLButtonElement>(`#delete-dialog-confirm-${this.triggerId}`);
 
         if (!dialog || !filenameEl) return;
 
@@ -1213,10 +1252,10 @@ class StorageFileBrowser extends HTMLElement {
 
     private showDeleteConfirmation(file: StorageFile): void {
         this.fileToDelete = file;
-        const dialog = this.querySelector<HTMLDivElement>(`#delete-dialog-${this.triggerId}`);
+        const dialog = this.$<HTMLDivElement>(`#delete-dialog-${this.triggerId}`);
         const filenameEl = dialog?.querySelector<HTMLParagraphElement>('.storage-browser-delete-filename');
-        const cancelBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-cancel-${this.triggerId}`);
-        const confirmBtn = this.querySelector<HTMLButtonElement>(`#delete-dialog-confirm-${this.triggerId}`);
+        const cancelBtn = this.$<HTMLButtonElement>(`#delete-dialog-cancel-${this.triggerId}`);
+        const confirmBtn = this.$<HTMLButtonElement>(`#delete-dialog-confirm-${this.triggerId}`);
 
         if (!dialog || !filenameEl) return;
 
@@ -1259,7 +1298,7 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private async deleteFile(file: StorageFile): Promise<void> {
-        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        const content = this.$<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;
 
         content.innerHTML = `<div class="storage-browser-loading" role="status">${this.t('deletingFile')}</div>`;
@@ -1293,7 +1332,7 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private async renameFolder(oldName: string, newName: string): Promise<void> {
-        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        const content = this.$<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;
 
         content.innerHTML = `
@@ -1360,7 +1399,7 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private async deleteFolder(folderName: string): Promise<void> {
-        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        const content = this.$<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;
 
         content.innerHTML = `
@@ -1417,8 +1456,8 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private showCreateFolderDialog(): void {
-        const folderDialog = this.querySelector<HTMLDivElement>(`#folder-dialog-${this.triggerId}`);
-        const folderNameInput = this.querySelector<HTMLInputElement>(`#folder-name-input-${this.triggerId}`);
+        const folderDialog = this.$<HTMLDivElement>(`#folder-dialog-${this.triggerId}`);
+        const folderNameInput = this.$<HTMLInputElement>(`#folder-name-input-${this.triggerId}`);
 
         if (folderDialog && folderNameInput) {
             folderDialog.style.display = 'flex';
@@ -1428,7 +1467,7 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private async createFolder(folderName: string): Promise<void> {
-        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        const content = this.$<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;
 
         content.innerHTML = `<div class="storage-browser-loading" role="status">${this.t('creatingFolder')}</div>`;
@@ -1473,7 +1512,7 @@ class StorageFileBrowser extends HTMLElement {
         if (this.isUploading) return;
 
         this.isUploading = true;
-        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        const content = this.$<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;
 
         const totalFiles = this.pendingFiles.length;
@@ -1550,11 +1589,11 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private showRenameFolderDialog(folderName: string): void {
-        const dialog = this.querySelector<HTMLDivElement>(`#rename-dialog-${this.triggerId}`);
-        const fileNameDisplay = this.querySelector<HTMLSpanElement>(`#rename-current-name-${this.triggerId}`);
-        const input = this.querySelector<HTMLInputElement>(`#rename-input-${this.triggerId}`);
-        const confirmBtn = this.querySelector<HTMLButtonElement>(`#rename-confirm-btn-${this.triggerId}`);
-        const cancelBtn = this.querySelector<HTMLButtonElement>(`#rename-cancel-btn-${this.triggerId}`);
+        const dialog = this.$<HTMLDivElement>(`#rename-dialog-${this.triggerId}`);
+        const fileNameDisplay = this.$<HTMLSpanElement>(`#rename-current-name-${this.triggerId}`);
+        const input = this.$<HTMLInputElement>(`#rename-input-${this.triggerId}`);
+        const confirmBtn = this.$<HTMLButtonElement>(`#rename-confirm-btn-${this.triggerId}`);
+        const cancelBtn = this.$<HTMLButtonElement>(`#rename-cancel-btn-${this.triggerId}`);
 
         if (!dialog || !fileNameDisplay || !input || !confirmBtn || !cancelBtn) return;
 
@@ -1607,11 +1646,11 @@ class StorageFileBrowser extends HTMLElement {
     private showRenameDialog(file: StorageFile): void {
         this.fileToRename = file;
 
-        const dialog = this.querySelector<HTMLDivElement>(`#rename-dialog-${this.triggerId}`);
-        const fileNameDisplay = this.querySelector<HTMLSpanElement>(`#rename-current-name-${this.triggerId}`);
-        const input = this.querySelector<HTMLInputElement>(`#rename-input-${this.triggerId}`);
-        const confirmBtn = this.querySelector<HTMLButtonElement>(`#rename-confirm-btn-${this.triggerId}`);
-        const cancelBtn = this.querySelector<HTMLButtonElement>(`#rename-cancel-btn-${this.triggerId}`);
+        const dialog = this.$<HTMLDivElement>(`#rename-dialog-${this.triggerId}`);
+        const fileNameDisplay = this.$<HTMLSpanElement>(`#rename-current-name-${this.triggerId}`);
+        const input = this.$<HTMLInputElement>(`#rename-input-${this.triggerId}`);
+        const confirmBtn = this.$<HTMLButtonElement>(`#rename-confirm-btn-${this.triggerId}`);
+        const cancelBtn = this.$<HTMLButtonElement>(`#rename-cancel-btn-${this.triggerId}`);
 
         if (!dialog || !fileNameDisplay || !input || !confirmBtn || !cancelBtn) return;
 
@@ -1674,7 +1713,7 @@ class StorageFileBrowser extends HTMLElement {
     private async renameFile(newFileName: string): Promise<void> {
         if (!this.fileToRename) return;
 
-        const content = this.querySelector<HTMLDivElement>(`#${this.contentId}`);
+        const content = this.$<HTMLDivElement>(`#${this.contentId}`);
         if (!content) return;        // Show loading
         content.innerHTML = `
             <div class="storage-browser-loading" role="status" aria-live="polite">
@@ -1750,12 +1789,12 @@ class StorageFileBrowser extends HTMLElement {
     }
 
     private async showPreview(file: StorageFile): Promise<void> {
-        const dialog = this.querySelector<HTMLDivElement>(`#preview-dialog-${this.triggerId}`);
-        const content = this.querySelector<HTMLDivElement>(`#preview-content-${this.triggerId}`);
-        const loading = this.querySelector<HTMLDivElement>(`#preview-loading-${this.triggerId}`);
-        const closeBtn = this.querySelector<HTMLButtonElement>(`#preview-close-btn-${this.triggerId}`);
-        const downloadBtn = this.querySelector<HTMLAnchorElement>(`#preview-download-btn-${this.triggerId}`);
-        const title = this.querySelector<HTMLHeadingElement>(`#preview-dialog-title-${this.triggerId}`);
+        const dialog = this.$<HTMLDivElement>(`#preview-dialog-${this.triggerId}`);
+        const content = this.$<HTMLDivElement>(`#preview-content-${this.triggerId}`);
+        const loading = this.$<HTMLDivElement>(`#preview-loading-${this.triggerId}`);
+        const closeBtn = this.$<HTMLButtonElement>(`#preview-close-btn-${this.triggerId}`);
+        const downloadBtn = this.$<HTMLAnchorElement>(`#preview-download-btn-${this.triggerId}`);
+        const title = this.$<HTMLHeadingElement>(`#preview-dialog-title-${this.triggerId}`);
 
         if (!dialog || !content || !loading || !closeBtn || !downloadBtn || !title) {
             console.error('Preview dialog elements not found');
