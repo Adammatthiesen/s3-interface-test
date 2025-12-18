@@ -225,7 +225,7 @@ class StorageFileBrowser extends HTMLElement {
 
     connectedCallback(): void {
         // Setup Translations
-        const translationMapAttr = this.getAttr<string>('translation-map', '{}');
+        const translationMapAttr = this.getAttr('translation-map', '{}');
         this.translationMap = JSON.parse(translationMapAttr);
         this.translations = this.translationMap[this.currentLocale] || this.translationMap['en'];
 
@@ -238,7 +238,7 @@ class StorageFileBrowser extends HTMLElement {
         // Get attributes
         this.triggerId = this.getAttr('trigger-id', '');
         this.targetInputId = this.getAttr('target-input-id', '');
-        const fileTypesAttr = this.getAttr<string>('file-types', '[]');
+        const fileTypesAttr = this.getAttr('file-types', '[]');
         this.fileTypes = JSON.parse(fileTypesAttr);
 
         this.filesOnly = this.getAttr<string>('files-only', 'false') === 'true';
