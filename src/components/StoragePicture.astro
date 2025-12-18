@@ -1,4 +1,6 @@
 ---
+import { serverFetch } from '../utils/serverFetch';
+
 /**
  * StoragePicture Component
  * 
@@ -68,11 +70,11 @@ if (!identifier && !storageKey) {
 // Helper function to resolve URL
 async function resolveUrl(fileIdentifier: string) {
   try {
-    const response = await fetch(new URL(apiEndpoint, Astro.request.url), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'resolveUrl', identifier: fileIdentifier }),
-    });
+    const response = await serverFetch(apiEndpoint, Astro, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'resolveUrl', identifier: fileIdentifier }),
+      });
     
     if (!response.ok) {
       throw new Error(`Failed to resolve URL: ${response.statusText}`);
