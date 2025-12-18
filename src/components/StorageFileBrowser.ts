@@ -133,6 +133,11 @@ class StorageFileBrowser extends HTMLElement {
     private translationMap!: Record<string, TranslationStrings>;
     private localI18nStorageKey: string = 'storage-browser:locale';
 
+    private connectionTestResponse = {
+        status: 0,
+        message: ''
+    }
+
     constructor() {
         super();
 
@@ -364,6 +369,20 @@ class StorageFileBrowser extends HTMLElement {
     `;
     }
 
+    // On setup, test connection and if connection is unavailable disable trigger
+    async onloadTest(trigger: HTMLButtonElement) {
+        const connected = await this.testConnection();
+        if (!connected) {
+            // Disable trigger if connection fails
+            trigger.disabled = true;
+            // Set a11y and hovertext
+            trigger.setAttribute('aria-disabled', 'true');
+            trigger.setAttribute('title', this.t(this.connectionTestResponse.message as keyof TranslationStrings) || this.connectionTestResponse.message);
+            trigger.classList.add('disabled');
+            trigger.style.cursor = 'not-allowed';
+        }
+    }
+
     private attachEventListeners(): void {
         const modal = this.querySelector<HTMLDivElement>(`#${this.modalId}`);
         const trigger = document.getElementById(this.triggerId);
@@ -376,6 +395,8 @@ class StorageFileBrowser extends HTMLElement {
         const uploadInput = this.querySelector<HTMLInputElement>(`#upload-input-${this.triggerId}`);
 
         if (!modal || !content || !selectedInfo || !selectBtn) return;
+
+        this.onloadTest(trigger as HTMLButtonElement);
 
         // Open modal
         trigger?.addEventListener('click', async () => {
@@ -576,10 +597,20 @@ class StorageFileBrowser extends HTMLElement {
                         <p>${this.t(data.error)}</p>
                     </div>
                 `;
+
+                this.connectionTestResponse = {
+                    status: response.status,
+                    message: data.error || 'No error message provided'
+                }
+
                 return false;
             }
 
             if (!response.ok) {
+                this.connectionTestResponse = {
+                    status: response.status,
+                    message: data.error || 'No error message provided'
+                };
                 throw new Error(data.error || 'Connection test failed');
             }
 
@@ -601,6 +632,10 @@ class StorageFileBrowser extends HTMLElement {
         } catch (error) {
             console.error('Storage connection test failed:', error);
             this.connectionEstablished = false;
+            this.connectionTestResponse = {
+                status: 500,
+                message: 'Unknown error'
+            }
             content.innerHTML = `
                 <div class="storage-browser-error" role="alert">
                     <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
